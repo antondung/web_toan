@@ -1,4 +1,10 @@
-import sqlite3, socket, io, base64, os, json, random, re, time
+import sqlite3, socket, io, base64, os, json, random, re, time, sys
+if sys.platform == 'win32':
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
 from datetime import date, timedelta
 from functools import wraps
 from flask import Flask, render_template, request, jsonify, redirect, session
@@ -2211,11 +2217,14 @@ init_db()
 # ── Entry point ───────────────────────────────────────────────
 if __name__ == '__main__':
     ip = get_ip()
-    print(f'\n  ┌────────────────────────────────────────────────────────┐')
-    print(f'  │  🏆  ĐẤU TRƯỜNG TOÁN HỌC ĐANG CHẠY!                   │')
-    print(f'  ├────────────────────────────────────────────────────────┤')
-    print(f'  │  👉 Đại sảnh / Trang chủ:  http://localhost:{PORT}      │')
-    print(f'  │  📱 Mạng LAN nội bộ:       http://{ip}:{PORT}      │')
-    print(f'  │  👨‍🏫 Quản trị giáo viên:    http://{ip}:{PORT}/teacher │')
-    print(f'  └────────────────────────────────────────────────────────┘\n')
+    try:
+        print(f'\n  ============================================================')
+        print(f'     DAU TRUONG TOAN HOC DANG CHAY!')
+        print(f'  ============================================================')
+        print(f'  -> Dai sanh / Trang chu:  http://localhost:{PORT}')
+        print(f'  -> Mang LAN noi bo:       http://{ip}:{PORT}')
+        print(f'  -> Quan tri giao vien:    http://{ip}:{PORT}/teacher')
+        print(f'  ============================================================\n')
+    except Exception:
+        pass
     app.run(host='0.0.0.0', port=PORT, debug=False, threaded=True)
