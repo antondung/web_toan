@@ -6,7 +6,8 @@
   <title>Đấu Trường Toán Học 6 — Phân Hệ Quản Trị Giáo Viên</title>
   <link rel="icon" href="/favicon.ico" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&display=swap" rel="stylesheet">
   <style>
     :root {
       --tp-bg: #F8FAFC;
@@ -34,9 +35,13 @@
       --tp-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
       --tp-shadow-hover: 0 10px 25px -3px rgba(15, 23, 42, 0.08);
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    }
     body {
-      font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background-color: var(--tp-bg);
       color: var(--tp-text);
       min-height: 100vh;
@@ -46,7 +51,7 @@
 
     /* ── TOPBAR ── */
     .tp-topbar {
-      height: 70px;
+      height: 72px;
       background: var(--tp-surface);
       border-bottom: 1px solid var(--tp-border);
       display: flex;
@@ -64,25 +69,20 @@
       text-decoration: none;
       color: inherit;
     }
-    .tp-brand-logo {
-      width: 42px;
-      height: 42px;
-      background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 1.4rem;
-      box-shadow: 0 4px 10px rgba(37,99,235,0.25);
+    .tp-brand-logo-img {
+      height: 48px;
+      width: auto;
+      max-width: 140px;
+      object-fit: contain;
+      display: block;
     }
     .tp-brand-text {
       display: flex;
       flex-direction: column;
     }
     .tp-brand-name {
-      font-family: 'Fredoka One', cursive;
       font-size: 1.15rem;
+      font-weight: 900;
       color: #1E3A8A;
       letter-spacing: -0.01em;
       line-height: 1.1;
@@ -91,15 +91,15 @@
       font-size: 0.72rem;
       font-weight: 800;
       color: #2563EB;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
     }
 
     /* Search bar */
     .tp-search-wrap {
       flex: 1;
-      max-width: 480px;
-      margin: 0 32px;
+      max-width: 460px;
+      margin: 0 28px;
       position: relative;
     }
     .tp-search-input {
@@ -110,7 +110,6 @@
       border-radius: 12px;
       padding: 0 16px 0 42px;
       font-size: 0.88rem;
-      font-family: inherit;
       color: var(--tp-text);
       outline: none;
       transition: all 0.2s;
@@ -201,7 +200,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 4px 10px 4px 4px;
+      padding: 4px 12px 4px 4px;
       border-radius: 999px;
       background: #F8FAFC;
       border: 1px solid #E2E8F0;
@@ -210,18 +209,19 @@
     }
     .tp-teacher-profile:hover {
       background: #F1F5F9;
+      border-color: #BFDBFE;
     }
     .tp-teacher-avatar {
-      width: 36px;
-      height: 36px;
+      width: 38px;
+      height: 38px;
       border-radius: 50%;
       background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
       color: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 800;
-      font-size: 0.95rem;
+      font-weight: 900;
+      font-size: 1.1rem;
       box-shadow: 0 2px 6px rgba(37,99,235,0.2);
     }
     .tp-teacher-info {
@@ -230,7 +230,7 @@
       text-align: left;
     }
     .tp-teacher-name {
-      font-size: 0.85rem;
+      font-size: 0.88rem;
       font-weight: 800;
       color: var(--tp-text);
       line-height: 1.2;
@@ -245,7 +245,7 @@
     .tp-layout {
       display: flex;
       flex: 1;
-      min-height: calc(100vh - 70px);
+      min-height: calc(100vh - 72px);
     }
 
     /* ── SIDEBAR ── */
@@ -259,8 +259,8 @@
       padding: 20px 14px;
       flex-shrink: 0;
       position: sticky;
-      top: 70px;
-      height: calc(100vh - 70px);
+      top: 72px;
+      height: calc(100vh - 72px);
       overflow-y: auto;
     }
     .tp-nav-group {
@@ -331,61 +331,150 @@
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* ── BANNER CHÀO MỪNG (DASHBOARD) ── */
+    /* ── BANNER CHÀO MỪNG (DASHBOARD) — CLEAN NON-OVERLAPPING ── */
     .tp-welcome-banner {
       background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 50%, #EFF6FF 100%);
       border: 1.5px solid #BFDBFE;
       border-radius: var(--tp-radius);
       padding: 24px 28px;
       margin-bottom: 24px;
-      position: relative;
-      overflow: hidden;
       box-shadow: var(--tp-shadow);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top row of banner: Greeting on left, art/quote on right */
+    .tp-welcome-top-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 24px;
       flex-wrap: wrap;
+      margin-bottom: 20px;
     }
-    .tp-welcome-left {
+    .tp-welcome-greeting-block {
       flex: 1;
-      min-width: 320px;
+      min-width: 280px;
     }
-    .tp-welcome-title {
-      font-family: 'Fredoka One', cursive;
-      font-size: 1.7rem;
-      color: #1E3A8A;
-      margin-bottom: 4px;
+    .tp-welcome-title-wrap {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 4px;
+    }
+    .tp-welcome-title {
+      font-size: 1.65rem;
+      font-weight: 900;
+      color: #1E3A8A;
+      line-height: 1.2;
+    }
+    .tp-btn-edit-name {
+      padding: 4px 10px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.85);
+      border: 1px solid #BFDBFE;
+      color: #2563EB;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tp-btn-edit-name:hover {
+      background: #FFFFFF;
+      border-color: #2563EB;
+      box-shadow: 0 2px 6px rgba(37,99,235,0.15);
     }
     .tp-welcome-sub {
       font-size: 0.95rem;
-      font-weight: 700;
+      font-weight: 600;
       color: #475569;
-      margin-bottom: 20px;
     }
 
-    /* 4 Header stat metric cards */
+    /* Blackboard illustration & Quote block (Clean & Self-Contained) */
+    .tp-welcome-art-quote {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+    .tp-board-art {
+      width: 190px;
+      height: 100px;
+      background: linear-gradient(145deg, #1E293B 0%, #0F172A 100%);
+      border: 3.5px solid #78350F;
+      border-radius: 10px;
+      padding: 8px 10px;
+      color: #E2E8F0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+      flex-shrink: 0;
+    }
+    .tp-board-content {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+    }
+    .tp-board-formula {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: #FDE047;
+    }
+    .tp-board-shapes {
+      font-size: 0.76rem;
+      color: #67E8F9;
+      font-weight: 700;
+      display: flex;
+      gap: 6px;
+    }
+    .tp-board-teacher-icon {
+      font-size: 2.4rem;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+    }
+    .tp-quote-card {
+      max-width: 220px;
+      font-size: 0.8rem;
+      color: #334155;
+      font-style: italic;
+      line-height: 1.45;
+      border-left: 3px solid #3B82F6;
+      padding-left: 10px;
+    }
+    .tp-quote-author {
+      margin-top: 4px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #64748B;
+      font-style: normal;
+    }
+
+    /* 4 Header stat metric cards (Dedicated Bottom Row in Banner) */
     .tp-metric-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 14px;
+      width: 100%;
     }
-    @media(max-width: 900px){
-      .tp-metric-grid { grid-template-columns: repeat(2, 1fr); }
+    @media(max-width: 1024px){
+      .tp-metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media(max-width: 540px){
+      .tp-metric-grid { grid-template-columns: 1fr; }
     }
     .tp-metric-card {
       background: #FFFFFF;
       border: 1px solid #E2E8F0;
       border-radius: 14px;
-      padding: 12px 14px;
+      padding: 14px 16px;
       display: flex;
       align-items: center;
       gap: 12px;
       box-shadow: 0 2px 8px rgba(15,23,42,0.03);
       transition: transform 0.15s, box-shadow 0.15s;
+      min-width: 0;
     }
     .tp-metric-card:hover {
       transform: translateY(-2px);
@@ -405,76 +494,24 @@
     .tp-metric-icon-wrap.green  { background: #ECFDF5; color: #10B981; }
     .tp-metric-icon-wrap.amber  { background: #FFFBEB; color: #F59E0B; }
     .tp-metric-icon-wrap.purple { background: #F5F3FF; color: #8B5CF6; }
+    .tp-metric-data {
+      min-width: 0;
+    }
     .tp-metric-num {
-      font-family: 'Fredoka One', cursive;
       font-size: 1.55rem;
+      font-weight: 900;
       line-height: 1;
       color: var(--tp-text);
-      margin-bottom: 2px;
+      margin-bottom: 3px;
     }
     .tp-metric-lbl {
-      font-size: 0.74rem;
+      font-size: 0.75rem;
       font-weight: 700;
       color: var(--tp-text-muted);
       line-height: 1.2;
-    }
-
-    /* Chalkboard illustration & Quote */
-    .tp-welcome-right {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      flex-shrink: 0;
-    }
-    .tp-board-art {
-      width: 220px;
-      height: 125px;
-      background: linear-gradient(145deg, #1E293B 0%, #0F172A 100%);
-      border: 4px solid #78350F;
-      border-radius: 10px;
-      padding: 10px 12px;
-      color: #E2E8F0;
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-    }
-    .tp-board-formula {
-      font-family: 'Fredoka One', cursive;
-      font-size: 0.82rem;
-      color: #FDE047;
-      opacity: 0.9;
-    }
-    .tp-board-shapes {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      color: #67E8F9;
-      font-size: 0.9rem;
-    }
-    .tp-board-teacher {
-      position: absolute;
-      right: -8px;
-      bottom: -4px;
-      font-size: 3rem;
-      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
-    }
-    .tp-quote-card {
-      max-width: 230px;
-      font-size: 0.82rem;
-      color: #334155;
-      font-style: italic;
-      line-height: 1.45;
-      border-left: 3px solid #3B82F6;
-      padding-left: 12px;
-    }
-    .tp-quote-author {
-      margin-top: 6px;
-      font-size: 0.74rem;
-      font-weight: 800;
-      color: #64748B;
-      font-style: normal;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     /* ── CARD GRID LAYOUTS ── */
@@ -564,8 +601,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: 'Fredoka One', cursive;
       font-size: 1.1rem;
+      font-weight: 900;
       color: #fff;
       flex-shrink: 0;
     }
@@ -692,8 +729,8 @@
       justify-content: space-between;
     }
     .tp-mini-stat-val {
-      font-family: 'Fredoka One', cursive;
       font-size: 1.35rem;
+      font-weight: 900;
       color: var(--tp-text);
       line-height: 1;
     }
@@ -832,8 +869,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: 'Fredoka One', cursive;
       font-size: 0.85rem;
+      font-weight: 900;
       flex-shrink: 0;
     }
     .tp-lead-rank.r1 { background: #FEF08A; color: #854D0E; }
@@ -894,8 +931,8 @@
       border-radius: 50%;
     }
     .tp-cta-title {
-      font-family: 'Fredoka One', cursive;
       font-size: 1.25rem;
+      font-weight: 900;
       line-height: 1.3;
       margin-bottom: 8px;
     }
@@ -904,15 +941,6 @@
       opacity: 0.9;
       line-height: 1.5;
       margin-bottom: 20px;
-    }
-    .tp-cta-trophy-img {
-      position: absolute;
-      right: 14px;
-      bottom: 14px;
-      width: 95px;
-      height: 95px;
-      object-fit: contain;
-      filter: drop-shadow(0 8px 12px rgba(0,0,0,0.2));
     }
     .tp-btn-cta-white {
       background: #FFFFFF;
@@ -1004,7 +1032,7 @@
     .tp-modal-box {
       background: #FFFFFF;
       border-radius: 20px;
-      max-width: 600px;
+      max-width: 540px;
       width: 100%;
       padding: 26px 30px;
       box-shadow: 0 20px 40px rgba(0,0,0,0.2);
@@ -1018,7 +1046,7 @@
       margin-bottom: 20px;
     }
     .tp-modal-title {
-      font-size: 1.25rem;
+      font-size: 1.2rem;
       font-weight: 800;
       color: var(--tp-text);
     }
@@ -1072,7 +1100,6 @@
       border-radius: 10px;
       padding: 10px 14px;
       font-size: 0.9rem;
-      font-family: inherit;
       color: var(--tp-text);
       outline: none;
       transition: all 0.2s;
@@ -1083,11 +1110,11 @@
       box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
     }
 
-    /* Live arena PIN & host controls */
+    /* Live arena PIN */
     .tp-pin-display {
-      font-family: 'Fredoka One', cursive;
       font-size: 3.5rem;
-      letter-spacing: 12px;
+      font-weight: 900;
+      letter-spacing: 10px;
       color: #2563EB;
       background: #EFF6FF;
       border: 2px dashed #93C5FD;
@@ -1103,7 +1130,7 @@
   <!-- ── TOPBAR ── -->
   <header class="tp-topbar">
     <a href="/teacher" class="tp-brand">
-      <div class="tp-brand-logo">🎓</div>
+      <img src="/static/logo.png" alt="Đấu Trường Toán Học" class="tp-brand-logo-img">
       <div class="tp-brand-text">
         <div class="tp-brand-name">ĐẤU TRƯỜNG TOÁN HỌC</div>
         <div class="tp-brand-sub">Hệ Thống Giáo Viên 6.0</div>
@@ -1126,10 +1153,10 @@
         <span class="tp-bell-dot"></span>
       </div>
 
-      <div class="tp-teacher-profile" onclick="switchView('tpView-settings')">
+      <div class="tp-teacher-profile" onclick="changeTeacherName()" title="Nhấn để đổi tên giáo viên">
         <div class="tp-teacher-avatar">👨‍🏫</div>
         <div class="tp-teacher-info">
-          <div class="tp-teacher-name">Thầy Nguyễn Văn Minh</div>
+          <div class="tp-teacher-name" id="tpTopTeacherName">{{ teacher_name or 'Thầy/Cô' }}</div>
           <div class="tp-teacher-role">Giáo viên Toán 6</div>
         </div>
       </div>
@@ -1200,70 +1227,80 @@
       {% endif %}
 
       <!-- ══════════════════════════════════════════════════════════ -->
-      <!-- VIEW 1: TỔNG QUAN (DASHBOARD) — MATCHING ẢNH 2 100% -->
+      <!-- VIEW 1: TỔNG QUAN (DASHBOARD) — CLEAN NON-OVERLAPPING -->
       <!-- ══════════════════════════════════════════════════════════ -->
       <section class="tp-view active" id="tpView-overview">
         
-        <!-- Welcome Top Banner -->
+        <!-- Welcome Top Banner (Row 1: Greeting + Art; Row 2: Metric Cards) -->
         <div class="tp-welcome-banner">
-          <div class="tp-welcome-left">
-            <h1 class="tp-welcome-title">Xin chào, Thầy Minh 👋</h1>
-            <p class="tp-welcome-sub">Chúc thầy có một ngày giảng dạy hiệu quả!</p>
-
-            <!-- 4 Metric Cards -->
-            <div class="tp-metric-grid">
-              <!-- Metric 1 -->
-              <div class="tp-metric-card">
-                <div class="tp-metric-icon-wrap blue">👥</div>
-                <div>
-                  <div class="tp-metric-num">12</div>
-                  <div class="tp-metric-lbl">Lớp đang quản lý</div>
-                </div>
+          
+          <!-- Banner Row 1: Greeting Title & Illustration -->
+          <div class="tp-welcome-top-row">
+            <div class="tp-welcome-greeting-block">
+              <div class="tp-welcome-title-wrap">
+                <h1 class="tp-welcome-title">Xin chào, <span id="tpTeacherGreeting">{{ teacher_name or 'Thầy/Cô' }}</span> 👋</h1>
+                <button class="tp-btn-edit-name" onclick="changeTeacherName()" title="Nhấn để đổi tên hiển thị">✏️ Đổi tên</button>
               </div>
+              <p class="tp-welcome-sub">Chúc thầy/cô có một ngày giảng dạy hiệu quả!</p>
+            </div>
 
-              <!-- Metric 2 -->
-              <div class="tp-metric-card">
-                <div class="tp-metric-icon-wrap green">👤</div>
-                <div>
-                  <div class="tp-metric-num">{{ char_count if char_count > 0 else 356 }}</div>
-                  <div class="tp-metric-lbl">Tổng số học sinh</div>
+            <!-- Blackboard Art & Quote -->
+            <div class="tp-welcome-art-quote">
+              <div class="tp-board-art">
+                <div class="tp-board-content">
+                  <div class="tp-board-formula">a² + b² = c²</div>
+                  <div class="tp-board-shapes">
+                    <span>△</span> <span>π ≈ 3.14</span> <span>∡ 90°</span>
+                  </div>
                 </div>
+                <div class="tp-board-teacher-icon">👨‍🏫</div>
               </div>
-
-              <!-- Metric 3 -->
-              <div class="tp-metric-card">
-                <div class="tp-metric-icon-wrap amber">📝</div>
-                <div>
-                  <div class="tp-metric-num">48</div>
-                  <div class="tp-metric-lbl">Bài tập đã giao</div>
-                </div>
-              </div>
-
-              <!-- Metric 4 -->
-              <div class="tp-metric-card">
-                <div class="tp-metric-icon-wrap purple">📈</div>
-                <div>
-                  <div class="tp-metric-num">92%</div>
-                  <div class="tp-metric-lbl">Tỷ lệ hoàn thành TB</div>
-                </div>
+              <div class="tp-quote-card">
+                “Giáo dục không phải là đổ đầy một cái bình, mà là thắp lên một ngọn lửa.”
+                <div class="tp-quote-author">— William Butler Yeats</div>
               </div>
             </div>
           </div>
 
-          <!-- Classroom chalkboard illustration & Quote -->
-          <div class="tp-welcome-right">
-            <div class="tp-board-art">
-              <div class="tp-board-formula">a² + b² = c²</div>
-              <div class="tp-board-shapes">
-                <span>△</span> <span>π ≈ 3.14</span> <span>∡ 90°</span>
+          <!-- Banner Row 2: 4 Metric Cards (Independent Grid) -->
+          <div class="tp-metric-grid">
+            <!-- Metric 1 -->
+            <div class="tp-metric-card">
+              <div class="tp-metric-icon-wrap blue">👥</div>
+              <div class="tp-metric-data">
+                <div class="tp-metric-num">12</div>
+                <div class="tp-metric-lbl">Lớp đang quản lý</div>
               </div>
-              <div class="tp-board-teacher">👨‍🏫</div>
             </div>
-            <div class="tp-quote-card">
-              “Giáo dục không phải là đổ đầy một cái bình, mà là thắp lên một ngọn lửa.”
-              <div class="tp-quote-author">— William Butler Yeats</div>
+
+            <!-- Metric 2 -->
+            <div class="tp-metric-card">
+              <div class="tp-metric-icon-wrap green">👤</div>
+              <div class="tp-metric-data">
+                <div class="tp-metric-num">{{ char_count if char_count > 0 else 356 }}</div>
+                <div class="tp-metric-lbl">Tổng số học sinh</div>
+              </div>
+            </div>
+
+            <!-- Metric 3 -->
+            <div class="tp-metric-card">
+              <div class="tp-metric-icon-wrap amber">📝</div>
+              <div class="tp-metric-data">
+                <div class="tp-metric-num">48</div>
+                <div class="tp-metric-lbl">Bài tập đã giao</div>
+              </div>
+            </div>
+
+            <!-- Metric 4 -->
+            <div class="tp-metric-card">
+              <div class="tp-metric-icon-wrap purple">📈</div>
+              <div class="tp-metric-data">
+                <div class="tp-metric-num">92%</div>
+                <div class="tp-metric-lbl">Tỷ lệ hoàn thành TB</div>
+              </div>
             </div>
           </div>
+
         </div>
 
         <!-- Middle Row: 3 Cards (Lớp học, Hoạt động, Thống kê) -->
@@ -1767,7 +1804,6 @@
         <!-- Custom Quizzes Container -->
         <div id="quizListView">
           <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));gap:20px" id="customQuizzesList">
-            <!-- Populated via JS -->
             <div style="text-align:center;padding:40px;color:var(--tp-text-muted)">Đang tải danh sách bộ đề…</div>
           </div>
         </div>
@@ -1915,7 +1951,7 @@
         <div id="hostMatchCard" class="tp-card" style="display:none;max-width:860px;margin:0 auto">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
             <div>
-              <span id="hostMatchQNum" style="font-family:'Fredoka One',cursive;font-size:1.3rem;color:#2563EB">Câu 1 / 10</span>
+              <span id="hostMatchQNum" style="font-size:1.3rem;font-weight:900;color:#2563EB">Câu 1 / 10</span>
               <span id="hostMatchTitle" style="color:#64748B;font-weight:800;font-size:0.9rem;margin-left:10px">...</span>
             </div>
             <div style="display:flex;gap:8px">
@@ -1964,7 +2000,7 @@
           <div style="font-size:0.85rem;font-weight:800;color:#F59E0B;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">
             KẾT QUẢ THI ĐẤU
           </div>
-          <h2 style="font-family:'Fredoka One',cursive;font-size:2rem;color:var(--tp-text);margin-bottom:24px">
+          <h2 style="font-size:2rem;font-weight:900;color:var(--tp-text);margin-bottom:24px">
             🎉 BỤC VINH DANH QUÁN QUÂN 🎉
           </h2>
 
@@ -2126,10 +2162,10 @@
               </div>
               <div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:4px">
                 <span>Tỷ lệ làm đúng:</span>
-                <b style="color:{{ '#10B981' if (100 - d.overall_rate) >= 70 else '#F59E0B' if (100 - d.overall_rate) >= 50 else '#EF4444' }}">{{ (100 - d.overall_rate) }}%</b>
+                <b style="color:{{ '#10B981' if (100 - d.overall_rate) >= 70 else '#F59E0B' if (100 - d.overall_rate) >= 50 else '#EF4444' }}">{{ 100 - d.overall_rate }}%</b>
               </div>
               <div style="height:6px;background:#E2E8F0;border-radius:999px;overflow:hidden">
-                <div style="height:100%;width:{{ (100 - d.overall_rate) }}%;background:{{ '#10B981' if (100 - d.overall_rate) >= 70 else '#F59E0B' if (100 - d.overall_rate) >= 50 else '#EF4444' }}"></div>
+                <div style="height:100%;width:{{ 100 - d.overall_rate }}%;background:{{ '#10B981' if (100 - d.overall_rate) >= 70 else '#F59E0B' if (100 - d.overall_rate) >= 50 else '#EF4444' }}"></div>
               </div>
             </div>
             {% else %}
@@ -2190,7 +2226,7 @@
               <div class="tp-card-title">Mở / Khóa Các Chương Học</div>
             </div>
             <div style="display:flex;flex-direction:column;gap:12px">
-              {% for grp in groups %}
+              {% for grp in unit_groups %}
               <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#F8FAFC;border-radius:10px">
                 <div style="display:flex;align-items:center;gap:10px">
                   <span style="font-size:1.3rem">{{ grp[4] }}</span>
@@ -2234,7 +2270,8 @@
   <!-- ── FOOTER ── -->
   <footer class="tp-footer">
     <div class="tp-footer-left">
-      <span style="font-family:'Fredoka One',cursive;color:#1E3A8A">🎓 ĐẤU TRƯỜNG TOÁN HỌC</span>
+      <img src="/static/logo.png" alt="Logo" style="height:30px;width:auto;object-fit:contain">
+      <span style="font-weight:800;color:#1E3A8A">ĐẤU TRƯỜNG TOÁN HỌC</span>
       <span>•</span>
       <span>Cùng học - Cùng tiến bộ - Cùng chinh phục</span>
     </div>
@@ -2282,6 +2319,62 @@
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
+  // ── USERNAME MANAGEMENT ──
+  // Initialize dynamic teacher name from localStorage or backend session
+  (function initTeacherName(){
+    const saved = localStorage.getItem('tp_teacher_name');
+    if(saved){
+      const g = document.getElementById('tpTeacherGreeting');
+      if(g) g.textContent = saved;
+      const top = document.getElementById('tpTopTeacherName');
+      if(top) top.textContent = saved;
+    }
+    // Also sync with server auth state
+    fetch('/api/auth/me').then(r=>r.json()).then(d=>{
+      if(d.authenticated && d.username && d.username.toLowerCase() !== 'teacher'){
+        const g = document.getElementById('tpTeacherGreeting');
+        if(g) g.textContent = d.username;
+        const top = document.getElementById('tpTopTeacherName');
+        if(top) top.textContent = d.username;
+      }
+    }).catch(()=>{});
+  })();
+
+  function changeTeacherName(){
+    const current = document.getElementById('tpTeacherGreeting')?.textContent?.trim() || 'Thầy/Cô';
+    const defaultVal = (current === 'Thầy/Cô') ? '' : current;
+    const newName = prompt('Nhập họ và tên hiển thị của Thầy/Cô (ví dụ: Thầy Dũng, Cô Mai, Thầy Nam):', defaultVal);
+    if(!newName || !newName.trim()) return;
+    const trimmed = newName.trim();
+    
+    // Save to localStorage
+    localStorage.setItem('tp_teacher_name', trimmed);
+    
+    // Update DOM
+    const g = document.getElementById('tpTeacherGreeting');
+    if(g) g.textContent = trimmed;
+    const top = document.getElementById('tpTopTeacherName');
+    if(top) top.textContent = trimmed;
+
+    // Send to backend
+    fetch('/api/teacher/update_name', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({name: trimmed})
+    }).catch(()=>{});
+  }
+
+  // Khôi phục tên Thầy/Cô đã lưu trong trình duyệt nếu đang hiển thị mặc định
+  document.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('tp_teacher_name');
+    if(saved && saved.trim()){
+      const g = document.getElementById('tpTeacherGreeting');
+      if(g && (!g.textContent.trim() || g.textContent.trim() === 'Thầy/Cô')) g.textContent = saved.trim();
+      const top = document.getElementById('tpTopTeacherName');
+      if(top && (!top.textContent.trim() || top.textContent.trim() === 'Thầy/Cô')) top.textContent = saved.trim();
+    }
+  });
+
   // ── 1. SUB-VIEW NAVIGATION ──
   function switchView(viewId){
     document.querySelectorAll('.tp-view').forEach(v => v.classList.remove('active'));
@@ -2317,11 +2410,14 @@
   function handleGlobalSearch(query){
     query = (query || '').toLowerCase().trim();
     if(!query) return;
-    // Switch to students or classes if matching
     if(query.includes('lớp') || query.includes('6a') || query.includes('6b')){
       switchView('tpView-classes');
     } else if(query.includes('đề') || query.includes('bài')){
       switchView('tpView-exams');
+    } else if(query.includes('đấu trường') || query.includes('phòng')){
+      switchView('tpView-arena');
+    } else if(query.includes('học sinh')){
+      switchView('tpView-students');
     }
   }
 
@@ -2339,7 +2435,7 @@
   }
 
   function openHelpModal(){
-    alert('ĐẤU TRƯỜNG TOÁN HỌC 6 - HƯỚNG DẪN DÀNH CHO GIÁO VIÊN:\n\n1. Tổng quan: Xem báo cáo tổng thể, biểu đồ học tập.\n2. Quản lý lớp: Theo dõi danh sách và giao bài cho từng lớp.\n3. Ngân hàng đề: Tự soạn câu hỏi và tạo bộ đề mới.\n4. Đấu trường: Bấm "Tạo Phòng & Mở Sảnh Chờ" để lấy mã PIN 6 số cho cả lớp thi đấu trực tiếp.\n5. Học sinh: Cấp điểm thưởng XP, đặt lại mật khẩu.');
+    alert('ĐẤU TRƯỜNG TOÁN HỌC 6 - HƯỚNG DẪN DÀNH CHO GIÁO VIÊN:\n\n1. Đổi tên hiển thị: Bấm vào nút "✏️ Đổi tên" bên cạnh lời chào để nhập tên của Thầy/Cô.\n2. Tổng quan: Xem biểu đồ tiến độ các lớp 6A-6D và các hoạt động nộp bài.\n3. Quản lý lớp: Theo dõi danh sách và giao bài cho từng lớp.\n4. Ngân hàng đề: Soạn câu hỏi và tạo bộ đề kiểm tra mới.\n5. Đấu trường: Bấm "Tạo Phòng & Mở Sảnh Chờ" để lấy mã PIN 6 số cho học sinh thi đấu trực tiếp.\n6. Học sinh: Cấp điểm thưởng XP, xem mã PIN cá nhân.');
   }
 
   function openNotificationsModal(){
@@ -2347,7 +2443,7 @@
   }
 
   function doTeacherLogout(){
-    if(confirm('Thầy có chắc chắn muốn đăng xuất khỏi hệ thống giáo viên?')){
+    if(confirm('Thầy/Cô có chắc chắn muốn đăng xuất khỏi hệ thống giáo viên?')){
       location.href = '/teacher/logout';
     }
   }
@@ -2584,7 +2680,7 @@
   }
 
   async function deleteCustomQuiz(quizId){
-    if(!confirm('Thầy có chắc chắn muốn xóa bộ đề này?')) return;
+    if(!confirm('Thầy/Cô có chắc chắn muốn xóa bộ đề này?')) return;
     try {
       const res = await fetch(`/api/quizzes/${quizId}`, {method: 'DELETE'});
       const d = await res.json();
@@ -2795,7 +2891,7 @@
         grid.innerHTML = q.choices.map((ch, idx) => {
           const isCorrect = d.show_result && (ch === q.answer);
           return `<div style="background:${isCorrect ? '#ECFDF5' : '#F8FAFC'};border:1.5px solid ${isCorrect ? '#10B981' : '#E2E8F0'};border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px;font-weight:700">
-            <span style="font-family:'Fredoka One',cursive;color:#2563EB">${String.fromCharCode(65+idx)}.</span>
+            <span style="font-weight:900;color:#2563EB">${String.fromCharCode(65+idx)}.</span>
             <span>${esc(ch)}</span>
             ${isCorrect ? '<span style="margin-left:auto;color:#10B981">✅ Đáp án đúng</span>' : ''}
           </div>`;
@@ -2848,7 +2944,7 @@
   }
 
   async function hostEndMatchEarly(){
-    if(!confirm('Thầy có chắc chắn muốn kết thúc trận đấu ngay bây giờ?')) return;
+    if(!confirm('Thầy/Cô có chắc chắn muốn kết thúc trận đấu ngay bây giờ?')) return;
     if(!currentHostCode) return;
     await fetch('/api/room/end', {
       method: 'POST',
@@ -2879,7 +2975,7 @@
           <div style="font-weight:800;font-size:1.1rem;color:var(--tp-text);margin-bottom:2px">${esc(r.player.name)}</div>
           <div style="font-size:0.85rem;color:#2563EB;font-weight:800;margin-bottom:8px">${r.player.score.toLocaleString()} đ</div>
           <div style="height:${r.height};background:#F8FAFC;border-radius:14px 14px 0 0;border:2px solid ${r.color};display:flex;flex-direction:column;align-items:center;justify-content:center">
-            <div style="font-family:'Fredoka One',cursive;font-size:1.1rem;color:${r.color}">${r.badge}</div>
+            <div style="font-size:1.05rem;font-weight:900;color:${r.color}">${r.badge}</div>
           </div>
         </div>
       `;

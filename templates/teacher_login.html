@@ -1,49 +1,134 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Math Quest — Teacher Login</title>
+  <title>Đấu Trường Toán Học 6 — Đăng Nhập Giáo Viên</title>
   <link rel="icon" href="/favicon.ico" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
-    :root{ --bg:#0f1226; --card:#1a1f3a; --line:#2a3154; --text:#e8ecff;
-           --muted:#8b93b8; --accent:#a855f7; --red:#f87171; }
-    *{box-sizing:border-box}
-    body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
-         background:radial-gradient(1200px 600px at 50% -10%,#241a4d,var(--bg));
-         font-family:'Nunito',system-ui,sans-serif;color:var(--text);padding:20px}
-    .card{width:100%;max-width:380px;background:var(--card);border:1px solid var(--line);
-          border-radius:20px;padding:32px 28px;box-shadow:0 20px 60px rgba(0,0,0,.45);text-align:center}
-    .logo{font-family:'Fredoka One',cursive;font-size:1.9rem;margin:0 0 4px;
-          background:linear-gradient(135deg,#a855f7,#38bdf8);-webkit-background-clip:text;
-          background-clip:text;-webkit-text-fill-color:transparent}
-    .sub{color:var(--muted);font-size:.9rem;margin-bottom:24px}
-    label{display:block;text-align:left;font-weight:700;font-size:.85rem;margin-bottom:6px}
-    input{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--line);
-          background:#141834;color:var(--text);font-size:1rem;font-family:inherit}
-    input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(168,85,247,.25)}
-    button{width:100%;margin-top:16px;padding:13px;border:0;border-radius:12px;cursor:pointer;
-           font-family:'Fredoka One',cursive;font-size:1rem;color:#fff;
-           background:linear-gradient(135deg,#a855f7,#7c3aed);box-shadow:0 4px 16px rgba(168,85,247,.35)}
-    button:hover{filter:brightness(1.12)}
-    .err{background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.4);color:var(--red);
-         border-radius:10px;padding:10px;font-size:.85rem;font-weight:700;margin-bottom:16px}
-    .foot{margin-top:20px;font-size:.78rem;color:var(--muted)}
-    .foot a{color:var(--muted)}
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at 50% 10%, #1E3A8A 0%, #0F172A 100%);
+      color: #F8FAFC;
+      padding: 20px;
+    }
+    .card {
+      width: 100%;
+      max-width: 420px;
+      background: rgba(30, 41, 59, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 24px;
+      padding: 36px 32px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      text-align: center;
+    }
+    .logo-img {
+      max-height: 60px;
+      width: auto;
+      max-width: 180px;
+      object-fit: contain;
+      margin-bottom: 14px;
+    }
+    .sub {
+      color: #94A3B8;
+      font-size: 0.92rem;
+      font-weight: 600;
+      margin-bottom: 26px;
+    }
+    label {
+      display: block;
+      text-align: left;
+      font-weight: 700;
+      font-size: 0.88rem;
+      margin-bottom: 8px;
+      color: #E2E8F0;
+    }
+    input {
+      width: 100%;
+      padding: 13px 16px;
+      border-radius: 12px;
+      border: 1.5px solid rgba(255, 255, 255, 0.15);
+      background: rgba(15, 23, 42, 0.6);
+      color: #F8FAFC;
+      font-size: 1rem;
+      font-weight: 600;
+      outline: none;
+      transition: all 0.2s;
+    }
+    input:focus {
+      border-color: #3B82F6;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25);
+      background: rgba(15, 23, 42, 0.9);
+    }
+    button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 14px;
+      border: 0;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 800;
+      color: #fff;
+      background: linear-gradient(135deg, #2563EB, #1D4ED8);
+      box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35);
+      transition: all 0.2s;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.45);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    .err {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #FCA5A5;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+    }
+    .foot {
+      margin-top: 24px;
+      font-size: 0.85rem;
+      color: #94A3B8;
+    }
+    .foot a {
+      color: #60A5FA;
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .foot a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
   <form class="card" method="POST" action="/teacher/login">
-    <h1 class="logo">Math Quest</h1>
-    <div class="sub">Teacher Dashboard</div>
-    {% if error %}<div class="err">Incorrect password — try again.</div>{% endif %}
+    <img src="/static/logo.png" alt="Đấu Trường Toán Học" class="logo-img">
+    <div class="sub">Phân Hệ Quản Trị Giáo Viên</div>
+    {% if error %}<div class="err">Mật khẩu chưa chính xác — vui lòng thử lại.</div>{% endif %}
     <input type="hidden" name="next" value="{{ next }}">
-    <label for="password">Password</label>
-    <input id="password" name="password" type="password" autofocus autocomplete="current-password">
-    <button type="submit">Sign in</button>
-    <div class="foot">Students: <a href="/">go to Math Quest</a></div>
+    <label for="password">Mật khẩu giáo viên</label>
+    <input id="password" name="password" type="password" autofocus autocomplete="current-password" placeholder="Nhập mật khẩu…">
+    <button type="submit">Đăng Nhập Vào Quản Trị →</button>
+    <div class="foot">Học sinh? <a href="/">Quay về Đấu Trường Toán Học</a></div>
   </form>
 </body>
 </html>

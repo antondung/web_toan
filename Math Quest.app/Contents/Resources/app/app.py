@@ -542,11 +542,11 @@ TEACHER_GROUPS = [(u['id'], u['num'], u['name'], u['color'], u['icon'],
 # Names are rendered on the student, teacher and display screens. Output is
 # escaped at every sink, but we also refuse the characters that make markup
 # possible so a bad name can never reach storage in the first place.
-NAME_RE = re.compile(r'^[^\x00-\x1f<>"&\\/]{1,20}$')
+NAME_RE = re.compile(r'^[^\x00-\x1f<>"&\\/]{1,50}$')
 
 def clean_name(raw):
     """Return a validated display name, or None if it isn't usable."""
-    name = str(raw or '').strip()[:20]
+    name = str(raw or '').strip()[:50]
     return name if NAME_RE.match(name) else None
 
 def this_monday():
@@ -890,6 +890,7 @@ def api_players():
 def api_auth_register():
     d = request.get_json(force=True) or {}
     username = clean_name(d.get('username', ''))
+    display_name = clean_name(d.get('display_name', '')) or username
     password = str(d.get('password', '')).strip()
     role = str(d.get('role', 'student')).strip().lower()
     
@@ -909,15 +910,17 @@ def api_auth_register():
                   (username, p_hash, role))
         user_id = c.execute("SELECT last_insert_rowid()").fetchone()[0]
         if role == 'student':
-            c.execute("INSERT OR IGNORE INTO characters (name) VALUES (?)", (username,))
+            c.execute("INSERT OR IGNORE INTO characters (name) VALUES (?)", (display_name,))
             
     session['user_id'] = user_id
     session['username'] = username
+    session['display_name'] = display_name
     session['role'] = role
     if role == 'teacher':
         session['teacher'] = True
+        session['teacher_name'] = display_name
     session.permanent = True
-    return jsonify({'ok': True, 'username': username, 'role': role})
+    return jsonify({'ok': True, 'username': username, 'display_name': display_name, 'role': role})
 
 @app.route('/api/auth/login', methods=['POST'])
 def api_auth_login():
@@ -2044,6 +2047,11 @@ def teacher():
     ip  = get_ip()
     url = f'http://{ip}:{PORT}'
     msg = request.args.get('msg', '')
+    raw_user = session.get('teacher_name') or session.get('display_name') or session.get('username') or ''
+    if not raw_user or raw_user.lower() == 'teacher':
+        teacher_name = 'Thầy/Cô'
+    else:
+        teacher_name = raw_user
 
     with sqlite3.connect(DB) as c:
         chars_raw = c.execute(
@@ -2171,11 +2179,30 @@ def teacher():
     )[:4]
 
     return render_template('teacher.html',
+        teacher_name=teacher_name,
         unit_groups=TEACHER_GROUPS,
         chars=chars, qr=make_qr(url), url=url, msg=msg,
         total_rounds=total_rounds, char_count=char_count, max_level=max_level,
         settings=settings, diag_data=diag_data, diff_spread=diff_spread,
         needs_attention=needs_attention, spanish_count=spanish_count)
+
+@app.route('/api/teacher/update_name', methods=['POST'])
+@require_teacher
+def api_teacher_update_name():
+    d = request.get_json(force=True) or {}
+    name = clean_name(d.get('name', ''))
+    if not name:
+        return jsonify({'ok': False, 'error': 'Tên không hợp lệ'}), 400
+    session['teacher_name'] = name
+    session['display_name'] = name
+    if session.get('user_id'):
+        try:
+            with sqlite3.connect(DB) as c:
+                c.execute("UPDATE users SET username=? WHERE id=?", (name, session['user_id']))
+                session['username'] = name
+        except sqlite3.IntegrityError:
+            pass
+    return jsonify({'ok': True, 'name': name})
 
 @app.route('/teacher/delete_student', methods=['POST'])
 @require_teacher

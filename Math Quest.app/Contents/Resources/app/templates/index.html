@@ -191,8 +191,12 @@
       <!-- Form Đăng Ký -->
       <div id="formRegister" style="display:none">
         <div class="edtech-form-group">
-          <label class="edtech-form-label">Tên Đăng Nhập Mới</label>
-          <input type="text" id="regUsername" class="edtech-input" placeholder="Ví dụ: namtoan6…" autocomplete="username">
+          <label class="edtech-form-label">Tên Đăng Nhập (Username)</label>
+          <input type="text" id="regUsername" class="edtech-input" placeholder="Ví dụ: namtoan6, dung123…" autocomplete="username">
+        </div>
+        <div class="edtech-form-group">
+          <label class="edtech-form-label">Họ Và Tên Hiển Thị (Tùy chọn)</label>
+          <input type="text" id="regFullName" class="edtech-input" placeholder="Ví dụ: Thầy Dũng, Nguyễn Văn Nam…">
         </div>
         <div class="edtech-form-group">
           <label class="edtech-form-label">Mật Khẩu</label>
@@ -293,7 +297,7 @@
           <div class="sp-user-badge" onclick="switchStudentView('inventory')" title="Xem túi đồ nhân vật">
             <img src="/static/student_avatar.png" alt="Avatar" class="sp-user-avatar-img" id="spTopAvatar">
             <div class="sp-user-meta">
-              <span class="sp-user-name" id="spTopName">Nguyễn Minh Anh</span>
+              <span class="sp-user-name" id="spTopName">Học sinh</span>
               <span class="sp-user-class" id="spTopClass">Lớp 6A</span>
             </div>
           </div>
@@ -312,7 +316,10 @@
           <!-- Banner chào mừng + Mountain illustration -->
           <div class="sp-welcome-banner">
             <div class="sp-welcome-left">
-              <h1 class="sp-welcome-title">Chào <span id="spDashGreetingName">Minh Anh</span> 👋</h1>
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                <h1 class="sp-welcome-title">Chào <span id="spDashGreetingName">Học sinh</span> 👋</h1>
+                <button class="sp-btn-edit-name" onclick="changeStudentName()" title="Đổi tên hiển thị" style="padding:4px 10px;font-size:0.75rem;font-weight:700;border-radius:8px;background:rgba(255,255,255,0.85);border:1px solid #BFDBFE;color:#2563EB;cursor:pointer;transition:all 0.2s">✏️ Đổi tên</button>
+              </div>
               <p class="sp-welcome-sub">Hôm nay mình chinh phục thử thách nào?</p>
               <div class="sp-welcome-streak">
                 <span>🔥</span>
@@ -332,7 +339,7 @@
                 <img src="/static/student_avatar.png" alt="Avatar" class="sp-profile-avatar-big" id="spDashProfileAvatar">
                 <div>
                   <div class="sp-profile-title-row">
-                    <span class="sp-profile-name" id="spDashProfileName">Nguyễn Minh Anh</span>
+                    <span class="sp-profile-name" id="spDashProfileName">Học sinh</span>
                     <span class="sp-profile-class" id="spDashProfileClass">Lớp 6A</span>
                   </div>
                   <div class="sp-profile-rank-badge" id="spDashLevelBadge">Cấp độ 3 · Học viên khám phá</div>
@@ -561,7 +568,7 @@
             <!-- Cột phải: Thẻ vị trí của bạn -->
             <div class="sp-card sp-my-rank-card">
               <img src="/static/student_avatar.png" alt="Avatar" class="sp-my-avatar-big" id="spMyAvatarImg">
-              <h3 class="sp-my-name" id="spMyRankName">Nguyễn Minh Anh</h3>
+              <h3 class="sp-my-name" id="spMyRankName">Học sinh</h3>
               <div class="sp-my-class" id="spMyRankClass">Lớp 6A</div>
 
               <div class="sp-my-stats-box">
@@ -1411,7 +1418,7 @@ async function openStudentPortal(view = 'dashboard'){
     return;
   }
 
-  const name = currentUser.username || localStorage.getItem('mq_name') || 'Minh Anh';
+  const name = currentUser?.username || localStorage.getItem('mq_name') || 'Học sinh';
   if(!character.name || character.name !== name){
     try {
       const data = await loadCharacter(name);
@@ -1476,7 +1483,7 @@ function toggleStudentSidebar(){
 
 // ── Cập nhật Header & Avatar học sinh ──
 function updateStudentHeaderInfo(){
-  const displayName = character.name || (currentUser ? currentUser.username : 'Minh Anh');
+  const displayName = character.name || currentUser?.username || localStorage.getItem('mq_name') || 'Học sinh';
   const userClass = 'Lớp 6A';
 
   const topName = document.getElementById('spTopName');
@@ -1486,8 +1493,29 @@ function updateStudentHeaderInfo(){
 }
 
 // ── 1. RENDER DASHBOARD (TỔNG QUAN) ──
+
+function changeStudentName(){
+  const current = document.getElementById('spDashGreetingName')?.textContent?.trim() || 'Học sinh';
+  const defaultVal = (current === 'Học sinh') ? '' : current;
+  const newName = prompt('Nhập họ và tên hiển thị của bạn (ví dụ: Minh Quân, Hải Đăng, Bảo Ngọc):', defaultVal);
+  if(!newName || !newName.trim()) return;
+  const trimmed = newName.trim();
+
+  localStorage.setItem('mq_name', trimmed);
+  if(character) character.name = trimmed;
+  if(currentUser) currentUser.username = trimmed;
+
+  ['spDashGreetingName', 'spDashProfileName', 'spTopName', 'spMyRankName'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.textContent = trimmed;
+  });
+
+  // Sync to character API
+  fetch('/api/character/' + encodeURIComponent(trimmed)).catch(()=>{});
+}
+
 function renderStudentDashboard(){
-  const displayName = character.name || 'Minh Anh';
+  const displayName = character.name || currentUser?.username || localStorage.getItem('mq_name') || 'Học sinh';
   const streak = character.streak || 5;
   const coins = character.coins !== undefined ? character.coins : 1250;
   const xp = character.xp || 0;
@@ -1707,7 +1735,7 @@ async function renderStudentLeaderboard(tab = 'weekly'){
       { name: 'Trần Gia Hân', score: 2420, class: '6B' },
       { name: 'Lê Hoàng Dũng', score: 2150, class: '6A' },
       { name: 'Phạm Phương Anh', score: 1890, class: '6C' },
-      { name: character.name || 'Nguyễn Minh Anh', score: 1250, class: '6A' },
+      { name: character.name || currentUser?.username || localStorage.getItem('mq_name') || 'Học sinh (Bạn)', score: 1250, class: '6A' },
       { name: 'Đỗ Tuấn Khải', score: 1100, class: '6B' },
       { name: 'Vũ Thảo My', score: 980, class: '6A' }
     ];
@@ -1752,7 +1780,7 @@ async function renderStudentLeaderboard(tab = 'weekly'){
     const myXpEl = document.getElementById('spMyRankXp');
     if(myXpEl) myXpEl.textContent = (character.xp || 1250).toLocaleString('vi-VN');
     const myNameEl = document.getElementById('spMyRankName');
-    if(myNameEl) myNameEl.textContent = character.name || 'Nguyễn Minh Anh';
+    if(myNameEl) myNameEl.textContent = character.name || currentUser?.username || localStorage.getItem('mq_name') || 'Học sinh';
 
   } catch(e){
     console.error('leaderboard fetch error', e);
@@ -2069,11 +2097,14 @@ async function doRegister(){
     return;
   }
 
+  const fullNameInput = document.getElementById('regFullName')?.value?.trim();
+  const displayName = fullNameInput || u;
+
   try {
     const res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({username: u, password: p, role: selectedRole})
+      body: JSON.stringify({username: u, display_name: displayName, password: p, role: selectedRole})
     });
     const d = await res.json();
     if(!d.ok){
@@ -2082,16 +2113,18 @@ async function doRegister(){
       return;
     }
 
-    currentUser = { username: d.username, role: d.role };
+    const effName = d.display_name || d.username;
+    currentUser = { username: effName, raw_username: d.username, role: d.role };
     closeAuthModal();
     updateNavbarUser();
 
     if(d.role === 'teacher'){
+      localStorage.setItem('tp_teacher_name', effName);
       location.href = '/teacher';
     } else {
-      localStorage.setItem('mq_name', d.username);
-      const charData = await loadCharacter(d.username);
-      character = {...charData, name: d.username};
+      localStorage.setItem('mq_name', effName);
+      const charData = await loadCharacter(effName);
+      character = {...charData, name: effName};
       applyCosmetics(character.cosmetics);
       openStudentPortal('dashboard');
     }
