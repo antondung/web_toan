@@ -1300,29 +1300,65 @@ const GENERATORS = {
 
 function genQ(topicId, diff){
   let uid;
-  if(topicId === 'mix'){
-    const pool = (typeof powerup !== 'undefined' && powerup.anyTopic)
-      ? IM_UNITS.map(u=>u.id)
-      : (typeof enabledUnits !== 'undefined' ? enabledUnits : ['c1a','c2a','c3a','c4a','c5a','c6a','c7a']);
-    const weak = (typeof practiceWeak !== 'undefined' ? practiceWeak : []).filter(w => pool.includes(w));
-    uid = pick(pool.concat(weak));
+  if(topicId === 'mix' || !topicId || topicId === 'all'){
+    let pool = (typeof enabledUnits !== 'undefined' && Array.isArray(enabledUnits) && enabledUnits.length > 0)
+      ? enabledUnits
+      : (typeof IM_UNITS !== 'undefined' && Array.isArray(IM_UNITS) && IM_UNITS.length > 0
+          ? IM_UNITS.map(u => u.id)
+          : Object.keys(GENERATORS));
+    if(typeof powerup !== 'undefined' && powerup.anyTopic && typeof IM_UNITS !== 'undefined' && Array.isArray(IM_UNITS) && IM_UNITS.length > 0){
+      pool = IM_UNITS.map(u => u.id);
+    }
+    const weak = (typeof practiceWeak !== 'undefined' && Array.isArray(practiceWeak) ? practiceWeak : []).filter(w => pool.includes(w));
+    uid = pick(pool.concat(weak)) || (pool.length ? pick(pool) : 'c1a');
+  } else if(typeof topicId === 'string' && !topicId.match(/^[a-z]\d+[a-z]$/)){
+    const subPool = (typeof IM_UNITS !== 'undefined' && Array.isArray(IM_UNITS) && IM_UNITS.length > 0)
+      ? IM_UNITS.filter(u => u.parent === topicId).map(u => u.id)
+      : Object.keys(GENERATORS).filter(k => k.startsWith(topicId));
+    uid = (subPool && subPool.length > 0) ? pick(subPool) : 'c1a';
   } else {
     uid = topicId;
   }
-  // If the student requested a parent unit directly (e.g. 'c1'), or in 'mix', allow CMAS ~30% of the time
+  if(!uid || typeof uid !== 'string') uid = 'c1a';
+
   const isParentUnit = !uid.match(/^[a-z]\d+[a-z]$/);
-  if(isParentUnit && CMAS_GEN[uid] && Math.random()<0.3){
+  if(isParentUnit && typeof CMAS_GEN !== 'undefined' && CMAS_GEN[uid] && Math.random()<0.3){
     const q=CMAS_GEN[uid](diff);
     q._unit=uid;
     return q;
   }
-  if(!GENERATORS[uid]) uid = 'c1a';
-  let q = GENERATORS[uid][diff]();
+  if(!GENERATORS[uid]){
+    const keys = Object.keys(GENERATORS);
+    uid = keys.length ? keys[0] : 'c1a';
+  }
+  diff = Math.max(0, Math.min(2, Number(diff) || 0));
+  let genFn = GENERATORS[uid] && GENERATORS[uid][diff];
+  if(typeof genFn !== 'function'){
+    genFn = (GENERATORS['c1a'] && GENERATORS['c1a'][0]) || Object.values(GENERATORS)[0][0];
+  }
+
+  let q;
+  try {
+    q = genFn();
+  } catch(err) {
+    console.error('Error generating question for unit ' + uid + ', diff ' + diff + ':', err);
+    try {
+      q = GENERATORS['c1a'][0]();
+    } catch(e) {
+      q = {
+        question: "12 + 15 = ?",
+        answer: "27",
+        choices: ["25", "27", "29", "30"],
+        why: "12 + 15 = 27"
+      };
+    }
+  }
+
   q.answer = String(q.answer);
-  let es = Array.isArray(q.choices_es) && q.choices_es.length === q.choices.length
+  let es = Array.isArray(q.choices_es) && q.choices_es.length === (q.choices ? q.choices.length : 0)
          ? q.choices_es.map(String) : null;
   if(q.choices_es && !es) delete q.choices_es;
-  let pairs = q.choices.map((c,i) => [String(c), es ? es[i] : String(c)]);
+  let pairs = (Array.isArray(q.choices) ? q.choices : [q.answer]).map((c,i) => [String(c), es ? es[i] : String(c)]);
 
   if(!pairs.some(p => p[0] === q.answer)) pairs[0] = [q.answer, q.answer];
   const seen = new Set();
@@ -1342,3 +1378,4 @@ function genQ(topicId, diff){
   q._unit = uid;
   return q;
 }
+

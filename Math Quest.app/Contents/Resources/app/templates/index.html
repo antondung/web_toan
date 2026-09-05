@@ -1014,7 +1014,7 @@ function reRenderGameQuestion(){
   if(answered && document.getElementById('whyBox')?.style.display==='') showWhy();
   if(!currentQ) return;
   document.getElementById('qLabel').innerHTML = t('q_of',{n:`<span id="qNum">${session.qIndex+1}</span>`});
-  document.getElementById('qText').innerHTML = applyVocabBridge(currentQ[lang] || currentQ.en || currentQ.question || '');
+  document.getElementById('qText').innerHTML = applyVocabBridge(currentQ[lang] || currentQ.vi || currentQ.en || currentQ.question || '');
   const diff = currentQ._diff ?? 0;
   const badge=document.getElementById('diffBadge');
   badge.textContent=t('diff_'+diff); badge.className='diff-badge '+DIFF_CLASSES[diff];
@@ -1236,7 +1236,7 @@ const ITEM_POWERS = {
 // STATE
 // ═══════════════════════════════════════════
 let character     = {name:'',xp:0,level:1,items:[],rounds_played:0,cosmetics:{},coins:0,owned:[]};
-let enabledUnits  = [];   // unit IDs available in this session
+let enabledUnits  = (typeof IM_UNITS !== 'undefined' && Array.isArray(IM_UNITS) && IM_UNITS.length > 0) ? IM_UNITS.map(u => u.id) : [];   // unit IDs available in this session
 let practiceWeak = [];    // sub-topic ids this student keeps getting wrong
 let myDifficulty = 2;     // 0=easy only, 1=up to medium, 2=full ramp (student's own choice)
 let session       = {topic:'',streak:0,maxStreak:0,qIndex:0,correct:0,xpEarned:0,newItems:[],retry:[],facedDiff:0};
@@ -1675,9 +1675,13 @@ function submitArenaPin(){
 }
 
 function startArenaFreeMode(){
-  const topSelect = document.getElementById('spArenaTopicSelect');
-  const sel = topSelect ? topSelect.value : 'mix';
-  selectTopic(sel);
+  const chapSelect = document.getElementById('spArenaChapterSelect');
+  const topSelect  = document.getElementById('spArenaTopicSelect');
+  let sel = topSelect ? topSelect.value : 'mix';
+  if((sel === 'mix' || !sel) && chapSelect && chapSelect.value !== 'all'){
+    sel = chapSelect.value;
+  }
+  selectTopic(sel || 'mix');
 }
 
 // ── 4. RENDER LEADERBOARD (BẢNG XẾP HẠNG) ──
@@ -2697,13 +2701,24 @@ function loadQ(){
   // round, after they have read the explanation. Reading why and then never
   // meeting the idea again is what made misses cost nothing.
   const retry = session.qIndex >= 8 ? session.retry.shift() : null;
-  if(retry){
-    currentQ      = retry;
-    currentQ._retry = true;
-    diff          = currentQ._diff ?? diff;
-  } else {
-    currentQ = genQ(session.topic, diff);
-    currentQ._retry = false;
+  try {
+    if(retry){
+      currentQ      = retry;
+      currentQ._retry = true;
+      diff          = currentQ._diff ?? diff;
+    } else {
+      currentQ = genQ(session.topic, diff);
+      currentQ._retry = false;
+    }
+  } catch(err) {
+    console.error('Error generating question in loadQ:', err);
+    currentQ = {
+      question: "Tính giá trị của biểu thức: 12 + 15",
+      answer: "27",
+      choices: ["25", "27", "29", "30"],
+      why: "12 + 15 = 27",
+      _retry: false
+    };
   }
   currentQ._diff=diff;
   currentQ._assisted = !!powerup.autoEliminate;   // help applied before they look
@@ -2713,7 +2728,7 @@ function loadQ(){
   session.facedDiff = Math.max(session.facedDiff, diff);
   document.getElementById('qNum').textContent           = session.qIndex+1;
   document.getElementById('qLabel').innerHTML           = t('q_of',{n:`<span id="qNum">${session.qIndex+1}</span>`});
-  document.getElementById('qText').innerHTML            = applyVocabBridge(currentQ[lang] || currentQ.en || currentQ.question || '');
+  document.getElementById('qText').innerHTML            = applyVocabBridge(currentQ[lang] || currentQ.vi || currentQ.en || currentQ.question || '');
   document.getElementById('xpDisplay').textContent      = session.xpEarned;
   document.getElementById('streakDisplay').textContent  = session.streak;
   document.getElementById('progressFill').style.width   = (session.qIndex/10*100)+'%';
