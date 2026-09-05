@@ -1,7 +1,7 @@
 Option Explicit
 
 ' ── Math Quest Launcher for Windows ──────────────────────────────
-' Double-click this file to start the server and open the teacher page.
+' Double-click this file to start the server and open the Grand Hall (Landing Page).
 ' No console window appears.
 
 Dim WshShell, FSO
@@ -30,9 +30,9 @@ If PythonExe = "" Then
     WScript.Quit
 End If
 
-' ── Already running? Just open the page ─────────────────────────
+' ── Already running? Just open the Grand Hall page ───────────────
 If IsServerRunning() Then
-    WshShell.Run "http://localhost:" & PORT & "/teacher"
+    WshShell.Run "http://localhost:" & PORT & "/"
     WScript.Quit
 End If
 
@@ -46,13 +46,13 @@ Dim i
 For i = 1 To 20
     WScript.Sleep 500
     If IsServerRunning() Then
-        WshShell.Run "http://localhost:" & PORT & "/teacher"
+        WshShell.Run "http://localhost:" & PORT & "/"
         WScript.Quit
     End If
 Next
 
 ' Timed out — open anyway and hope for the best
-WshShell.Run "http://localhost:" & PORT & "/teacher"
+WshShell.Run "http://localhost:" & PORT & "/"
 WScript.Quit
 
 ' ════════════════════════════════════════════════════════════════

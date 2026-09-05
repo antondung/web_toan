@@ -10,7 +10,7 @@ APP_DIR="$BUNDLE/Contents/Resources/app"
 
 # ── Already running? Just open the page ──────────────────────
 if lsof -ti tcp:$PORT >/dev/null 2>&1; then
-    open "http://localhost:$PORT/teacher"
+    open "http://localhost:$PORT/"
     exit 0
 fi
 
@@ -62,7 +62,7 @@ for i in $(seq 1 24); do
     sleep 0.5
     # Use bash's built-in TCP check — no curl overhead
     if (echo >/dev/tcp/localhost/$PORT) 2>/dev/null; then
-        open "http://localhost:$PORT/teacher"
+        open "http://localhost:$PORT/"
         exit 0
     fi
     if ! kill -0 $SERVER_PID 2>/dev/null; then
@@ -72,4 +72,4 @@ for i in $(seq 1 24); do
 done
 
 # Timed out but server may still be initialising — open anyway
-open "http://localhost:$PORT/teacher"
+open "http://localhost:$PORT/"
