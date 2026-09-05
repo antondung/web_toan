@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Math Quest — Class Display</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#0d0c1d; --surface:#16152b; --card:#1e1d38; --card2:#252448;
+      --text:#f0eeff; --muted:#7b78a8; --accent:#a855f7;
+      --amber:#f59e0b; --green:#4ade80; --red:#f87171; --blue:#60a5fa;
+      --radius:14px;
+    }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body {
+      font-family:'Nunito',sans-serif; background:var(--bg); color:var(--text);
+      height:100vh; overflow:hidden;
+      background-image:
+        radial-gradient(ellipse at 10% 10%, rgba(168,85,247,.1) 0%, transparent 55%),
+        radial-gradient(ellipse at 90% 90%, rgba(245,158,11,.06) 0%, transparent 55%);
+    }
+
+    /* ── Header ── */
+    .dsp-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:10px 28px; background:var(--surface);
+      border-bottom:1px solid rgba(255,255,255,.07);
+      height:56px; flex-shrink:0;
+    }
+    .dsp-logo { font-family:'Fredoka One',cursive; font-size:1.6rem; color:var(--accent); }
+    .dsp-logo span { color:var(--amber); }
+    .dsp-week { font-size:.75rem; font-weight:800; letter-spacing:.12em;
+                text-transform:uppercase; color:var(--muted); }
+    .dsp-timer { font-size:.72rem; font-weight:800; color:var(--muted);
+                 display:flex; align-items:center; gap:6px; }
+    .dsp-timer-dot { width:7px; height:7px; border-radius:50%;
+                     background:var(--green); animation:pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+    /* ── Main grid ── */
+    .dsp-root { display:flex; flex-direction:column; height:100vh; }
+    .dsp-main {
+      display:grid; grid-template-columns:42% 1fr;
+      gap:16px; padding:14px 20px 14px;
+      flex:1; min-height:0;
+    }
+
+    /* ── Leaderboard ── */
+    .dsp-lb { display:flex; flex-direction:column; gap:10px; min-height:0; }
+    .dsp-section-hdr {
+      font-family:'Fredoka One',cursive; font-size:1.05rem; color:var(--muted);
+      letter-spacing:.06em; text-transform:uppercase; flex-shrink:0;
+    }
+    .lb-list { display:flex; flex-direction:column; gap:5px; overflow:hidden; flex:1; }
+    .lb-row {
+      display:grid; grid-template-columns:36px 34px 1fr 110px 90px;
+      align-items:center; gap:8px;
+      background:var(--card); border-radius:10px; padding:7px 12px;
+      transition:background .15s;
+    }
+    .lb-row.top3 { background:var(--card2); border:1px solid rgba(245,158,11,.18); }
+    .lb-rank { font-family:'Fredoka One',cursive; font-size:1.1rem;
+               text-align:center; color:var(--muted); }
+    .lb-row.top3 .lb-rank { font-size:1.3rem; }
+    .lb-emoji { font-size:1.3rem; text-align:center; }
+    .lb-name { font-size:.97rem; font-weight:800; color:var(--text);
+               white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .lb-title { font-size:.65rem; font-weight:800; letter-spacing:.06em;
+                text-transform:uppercase; color:var(--muted); text-align:right; }
+    .lb-xp-wrap { display:flex; flex-direction:column; gap:3px; align-items:flex-end; }
+    .lb-bar-bg { width:100%; height:5px; background:rgba(255,255,255,.1); border-radius:100px; }
+    .lb-bar-fill { height:100%; border-radius:100px;
+                   background:linear-gradient(90deg,#a855f7,#c084fc); }
+    .lb-xp-num { font-size:.65rem; font-weight:800; color:var(--amber); }
+
+    /* ── Right panels ── */
+    .dsp-panels { display:grid; grid-template-rows:1fr 1fr; gap:12px; min-height:0; }
+    .dsp-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; min-height:0; }
+    .dsp-panel {
+      background:var(--card); border-radius:var(--radius);
+      padding:14px 16px; display:flex; flex-direction:column; gap:8px;
+      min-height:0; overflow:hidden;
+    }
+    .panel-hdr {
+      font-family:'Fredoka One',cursive; font-size:.95rem; flex-shrink:0;
+      display:flex; align-items:center; gap:6px;
+    }
+
+    /* Stats panel */
+    .stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; flex:1; }
+    .stat-box {
+      background:var(--card2); border-radius:10px; padding:10px;
+      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+    }
+    .stat-val { font-family:'Fredoka One',cursive; font-size:1.6rem; color:var(--amber); line-height:1; }
+    .stat-lbl { font-size:.6rem; font-weight:800; letter-spacing:.08em;
+                text-transform:uppercase; color:var(--muted); text-align:center; }
+
+    /* Unit spotlight */
+    .unit-row {
+      display:flex; align-items:center; gap:8px;
+      background:var(--card2); border-radius:9px; padding:7px 10px; flex:1;
+    }
+    .unit-icon { font-size:1.3rem; }
+    .unit-name { flex:1; font-size:.78rem; font-weight:800; color:var(--text); line-height:1.3; }
+    .unit-miss { font-size:.68rem; font-weight:800; padding:2px 8px;
+                 border-radius:100px; }
+    .miss-low  { background:rgba(74,222,128,.15); color:var(--green); }
+    .miss-mid  { background:rgba(245,158,11,.15); color:var(--amber); }
+    .miss-high { background:rgba(248,113,113,.15); color:var(--red); }
+
+    /* Achievements */
+    .ev-list { display:flex; flex-direction:column; gap:5px; flex:1; overflow:hidden; }
+    .ev-row {
+      display:flex; align-items:center; gap:8px;
+      background:var(--card2); border-radius:8px; padding:6px 10px; flex-shrink:0;
+    }
+    .ev-icon { font-size:1rem; }
+    .ev-msg { font-size:.78rem; font-weight:800; color:var(--text); flex:1; line-height:1.3; }
+    .ev-time { font-size:.6rem; color:var(--muted); font-weight:700; }
+    .ev-empty { font-size:.78rem; color:var(--muted); font-weight:700;
+                text-align:center; padding:16px 0; }
+
+    /* Hot this week */
+    .hot-list { display:flex; flex-direction:column; gap:5px; flex:1; }
+    .hot-row {
+      display:flex; align-items:center; gap:8px;
+      background:var(--card2); border-radius:8px; padding:6px 10px;
+    }
+    .hot-emoji { font-size:1.1rem; }
+    .hot-name  { flex:1; font-size:.82rem; font-weight:800; color:var(--text); }
+    .hot-count { font-size:.68rem; font-weight:800; color:var(--accent);
+                 background:rgba(168,85,247,.15); padding:2px 8px; border-radius:100px; }
+    .empty-msg { font-size:.78rem; color:var(--muted); font-weight:700;
+                 text-align:center; padding:12px 0; }
+  </style>
+</head>
+<body>
+<div class="dsp-root">
+
+  <!-- Header -->
+  <header class="dsp-header">
+    <div class="dsp-logo">⚔️ Đấu Trường Toán 6 <span style="color:var(--muted);font-size:1rem">·</span> Bảng Vinh Danh Lớp Học</div>
+    <div class="dsp-week">Bảng Xếp Hạng Tuần Này</div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <div class="dsp-timer">
+        <div class="dsp-timer-dot"></div>
+        Trực tiếp · Cập nhật {{ now }} · Làm mới sau <span id="countdown">{{ refresh }}</span>s
+      </div>
+      <a href="/teacher" target="_blank"
+         style="font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+                color:var(--muted);text-decoration:none;padding:5px 12px;
+                border:1px solid rgba(255,255,255,.12);border-radius:8px;
+                transition:color .15s,border-color .15s"
+         onmouseover="this.style.color='var(--text)';this.style.borderColor='rgba(255,255,255,.3)'"
+         onmouseout="this.style.color='var(--muted)';this.style.borderColor='rgba(255,255,255,.12)'">
+        ⚙️ Giáo Viên
+      </a>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="dsp-main">
+
+    <!-- Left: Leaderboard -->
+    <section class="dsp-lb">
+      <div class="dsp-section-hdr">🏆 Dẫn Đầu Điểm Số Tuần Này</div>
+      <div class="lb-list">
+        {% for p in leaderboard %}
+        <div class="lb-row {% if p.rank <= 3 %}top3{% endif %}">
+          <div class="lb-rank">{{ p.medal }}</div>
+          <div class="lb-emoji">{{ p.emoji }}</div>
+          <div class="lb-name">{{ p.name }}</div>
+          <div class="lb-title">{{ p.title }}</div>
+          <div class="lb-xp-wrap">
+            {% if p.next_title %}
+            <div style="font-size:.5rem;font-weight:800;color:var(--muted);letter-spacing:.04em;text-align:right;line-height:1.2">→ {{ p.next_title }}</div>
+            {% endif %}
+            <div class="lb-bar-bg"><div class="lb-bar-fill" style="width:{{ p.bar_pct }}%"></div></div>
+            <div class="lb-xp-num">{{ '{:,}'.format(p.week_xp) }} XP</div>
+          </div>
+        </div>
+        {% else %}
+        <div class="empty-msg" style="padding:32px 0">Chưa có ván đấu nào trong tuần này</div>
+        {% endfor %}
+      </div>
+
+      <div class="dsp-section-hdr" style="margin-top:18px;color:#4ade80">🚀 Tiến Bộ Nhanh Nhất Tuần Này</div>
+      <div class="lb-list">
+        {% for j in jumps %}
+        <div class="lb-row {% if j.rank <= 3 %}top3{% endif %}">
+          <div class="lb-rank">{{ j.medal }}</div>
+          <div class="lb-emoji">{{ j.emoji }}</div>
+          <div class="lb-name">{{ j.name }}</div>
+          <div class="lb-title" style="color:#4ade80">tiến bộ</div>
+          <div class="lb-xp-wrap">
+            <div class="lb-xp-num" style="color:#4ade80">+{{ '{:,}'.format(j.gain) }} XP</div>
+          </div>
+        </div>
+        {% else %}
+        <div class="empty-msg" style="padding:20px 0">Thành tích tiến bộ sẽ hiển thị từ tuần thứ 2 của học sinh</div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- Right: Panels -->
+    <div class="dsp-panels">
+
+      <!-- Row 1: Stats + Unit Spotlight -->
+      <div class="dsp-row">
+
+        <div class="dsp-panel">
+          <div class="panel-hdr" style="color:var(--amber)">📊 Hoạt Động Lớp Học Tuần Này</div>
+          <div class="stat-grid">
+            <div class="stat-box">
+              <div class="stat-val">{{ stats.active }}</div>
+              <div class="stat-lbl">Học sinh thi đấu</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-val">{{ stats.week_quests }}</div>
+              <div class="stat-lbl">Ván đấu hoàn thành</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-val">{{ '{:,}'.format(stats.week_xp) }}</div>
+              <div class="stat-lbl">Điểm XP tích lũy</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-val">{{ stats.total_quests }}</div>
+              <div class="stat-lbl">Tổng ván toàn thời gian</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dsp-panel">
+          <div class="panel-hdr" style="color:var(--blue)">📚 Tình Hình Theo Chương</div>
+          {% for u in units %}
+          <div class="unit-row">
+            <div class="unit-icon">{{ u.icon }}</div>
+            <div class="unit-name">{{ u.name }}</div>
+            <div class="unit-miss {% if u.miss_rate < 30 %}miss-low{% elif u.miss_rate < 55 %}miss-mid{% else %}miss-high{% endif %}">
+              {{ u.miss_rate }}% sai
+            </div>
+          </div>
+          {% else %}
+          <div class="empty-msg">Chưa có dữ liệu</div>
+          {% endfor %}
+        </div>
+
+      </div>
+
+      <!-- Row 2: Achievements + Hot This Week -->
+      <div class="dsp-row">
+
+        <div class="dsp-panel">
+          <div class="panel-hdr" style="color:var(--green)">✨ Thành Tựu Mới Đạt Được</div>
+          <div class="ev-list">
+            {% for e in events %}
+            <div class="ev-row">
+              <div class="ev-icon">{{ e.icon }}</div>
+              <div class="ev-msg">{{ e.msg }}</div>
+              <div class="ev-time">{{ e.time }}</div>
+            </div>
+            {% else %}
+            <div class="ev-empty">Các chiến tích sẽ xuất hiện khi học sinh thi đấu</div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="dsp-panel">
+          <div class="panel-hdr" style="color:var(--accent)">🔥 Siêu Cần Cù Tuần Này</div>
+          <div class="hot-list">
+            {% for h in hot %}
+            <div class="hot-row">
+              <div class="hot-emoji">{{ h.emoji }}</div>
+              <div class="hot-name">{{ h.name }}</div>
+              <div class="hot-count">{{ h.quests }} ván</div>
+            </div>
+            {% else %}
+            <div class="empty-msg">Chưa có ván đấu nào trong tuần này</div>
+            {% endfor %}
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /dsp-panels -->
+
+  </main>
+</div>
+
+<script>
+  let t = {{ refresh }};
+  const el = document.getElementById('countdown');
+  setInterval(() => {
+    t--;
+    if (el) el.textContent = t;
+    if (t <= 0) location.reload();
+  }, 1000);
+</script>
+</body>
+</html>

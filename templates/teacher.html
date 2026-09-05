@@ -1,0 +1,1641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎮 Math Quest — Teacher Dashboard</title>
+  <link rel="icon" href="/favicon.ico" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#0d0c1d; --card:#1e1d38; --card2:#252448; --card3:#2d2b50;
+      --text:#f0eeff; --muted:#7b78a8;
+      --amber:#f59e0b; --green:#4ade80; --red:#f87171; --purple:#a855f7; --blue:#60a5fa;
+      --radius:14px; --radius-lg:22px;
+    }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Nunito',sans-serif; background:var(--bg); color:var(--text);
+           min-height:100vh; padding:28px 24px;
+           background-image:
+             radial-gradient(ellipse at 10% 10%,rgba(168,85,247,.1) 0%,transparent 50%),
+             radial-gradient(ellipse at 90% 90%,rgba(245,158,11,.07) 0%,transparent 50%); }
+
+    /* ── Header ── */
+    header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+    .logo-small { font-family:'Fredoka One',cursive; font-size:1.6rem;
+                  background:linear-gradient(135deg,#ff6b35,#a855f7,#00d4aa);
+                  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .header-sub { color:var(--muted); font-weight:700; font-size:.8rem; letter-spacing:.1em; text-transform:uppercase; }
+    .auto-badge { font-size:.72rem; font-weight:800; color:var(--green);
+                  background:rgba(74,222,128,.12); border:1px solid rgba(74,222,128,.3);
+                  border-radius:100px; padding:5px 12px; }
+
+    /* ── Flash ── */
+    .flash { padding:12px 20px; border-radius:var(--radius); margin-bottom:18px; font-weight:700; font-size:.9rem; }
+    .flash-ok  { background:rgba(74,222,128,.15); border:1px solid rgba(74,222,128,.4);  color:var(--green); }
+    .flash-err { background:rgba(248,113,113,.12); border:1px solid rgba(248,113,113,.35); color:var(--red); }
+
+    /* ── Stats ── */
+    .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:22px; }
+    .stat-card { background:var(--card); border-radius:var(--radius); padding:15px 12px;
+                 text-align:center; border:1px solid rgba(255,255,255,.07); }
+    .stat-val  { font-family:'Fredoka One',cursive; font-size:2rem; line-height:1; margin-bottom:3px; }
+    .stat-lbl  { font-size:.68rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
+
+    /* ── Layout ── */
+    .layout { display:grid; grid-template-columns:300px 1fr; gap:18px; align-items:start; }
+    @media(max-width:720px){ .layout{grid-template-columns:1fr;} }
+
+    /* ── Cards ── */
+    .card { background:var(--card); border-radius:var(--radius-lg); padding:22px; border:1px solid rgba(255,255,255,.07); margin-bottom:16px; }
+    .card:last-child { margin-bottom:0; }
+    .card-title { font-family:'Fredoka One',cursive; font-size:.95rem; color:var(--muted);
+                  letter-spacing:.08em; text-transform:uppercase; margin-bottom:16px; }
+
+    /* ── QR panel ── */
+    .conn-panel{margin-top:14px;padding:12px;border-radius:12px;background:rgba(255,255,255,.03);
+      border:1px solid var(--line);font-size:.78rem}
+    .conn-hdr{font-weight:800;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
+      color:var(--muted);margin-bottom:8px}
+    .conn-addr{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+    .conn-addr code{background:#141834;padding:3px 7px;border-radius:6px;font-size:.76rem;
+      color:var(--text);font-weight:700;flex:1;overflow-wrap:anywhere}
+    .conn-copy{cursor:pointer;border:0;background:transparent;color:var(--muted);font-size:.8rem}
+    .conn-copy:hover{color:var(--text)}
+    .conn-status{margin:10px 0 6px;font-weight:800;padding:8px 10px;border-radius:9px}
+    .conn-ok{background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.4);color:#4ade80}
+    .conn-wait{background:rgba(251,191,36,.10);border:1px solid rgba(251,191,36,.35);color:#fbbf24}
+    .conn-row{display:flex;gap:8px;align-items:center;padding:4px 0;color:var(--muted);font-size:.74rem}
+    .conn-row .cd{font-weight:800;color:var(--text)}
+    .conn-help{margin-top:8px;font-size:.72rem;color:var(--muted);line-height:1.5}
+    .conn-help code{display:block;background:#141834;padding:7px 9px;border-radius:7px;
+      margin-top:5px;color:#fbbf24;font-size:.68rem;overflow-wrap:anywhere}
+    .qr-wrap { background:#fff; border-radius:var(--radius); padding:10px; width:100%;
+               box-shadow:0 4px 20px rgba(0,0,0,.4); margin-bottom:13px; }
+    .qr-wrap img { width:100%; display:block; border-radius:4px; }
+    .url-box { background:var(--card2); border-radius:var(--radius); padding:11px 14px;
+               font-family:'Fredoka One',cursive; font-size:.95rem; color:#00d4aa;
+               word-break:break-all; text-align:center; margin-bottom:11px;
+               border:1px solid rgba(0,212,170,.25); }
+    .hint { font-size:.76rem; color:var(--muted); font-weight:700; text-align:center; line-height:1.6; }
+
+    /* ── Module settings ── */
+    .unlock-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+    .unlock-status { font-size:.75rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
+                     color:var(--muted); }
+    .unlock-status.unlocked { color:var(--green); }
+    .unlock-btn { font-family:'Nunito',sans-serif; font-size:.8rem; font-weight:800;
+                  padding:6px 14px; border-radius:100px; border:1px solid rgba(255,255,255,.15);
+                  background:var(--card2); color:var(--text); cursor:pointer; transition:background .15s; }
+    .unlock-btn:hover { background:var(--card3); }
+    .unlock-btn:disabled { opacity:.5; cursor:default; }
+
+    .module-list { display:flex; flex-direction:column; gap:6px; }
+
+    /* unit group header */
+    .mod-grp-hdr { display:flex; align-items:center; flex-wrap:wrap; gap:4px 8px; padding:7px 4px 4px;
+                   border-bottom:1px solid rgba(255,255,255,.08); margin-top:12px; }
+    .mod-grp-hdr:first-child { margin-top:0; }
+    .mod-grp-num  { font-size:.6rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+    .mod-grp-name { font-size:.75rem; font-weight:800; flex:1; min-width:0; }
+    .mod-grp-btns { display:flex; gap:5px; flex-basis:100%; }
+    .mod-grp-btn  { font-family:'Nunito',sans-serif; font-size:.65rem; font-weight:800;
+                    padding:3px 9px; border-radius:100px; border:1px solid rgba(255,255,255,.12);
+                    background:var(--card2); color:var(--muted); cursor:pointer; transition:background .15s;
+                    text-decoration:none; display:inline-flex; align-items:center; }
+    .mod-grp-btn:hover { background:var(--card3); color:var(--text); }
+    .mod-grp-btn:disabled { opacity:.4; cursor:default; }
+
+    .module-row { display:flex; align-items:center; gap:10px; padding:8px 12px;
+                  background:var(--card2); border-radius:var(--radius); border:1px solid rgba(255,255,255,.06);
+                  transition:border-color .2s; }
+    .module-row.enabled  { border-color:rgba(168,85,247,.3); }
+    .module-row.disabled { opacity:.55; }
+    .module-info { flex:1; }
+    .module-name { font-weight:800; font-size:.8rem; line-height:1.2; }
+
+    /* CSS toggle switch */
+    .toggle-wrap { position:relative; display:inline-block; width:42px; height:23px; flex-shrink:0; }
+    .toggle-wrap input { opacity:0; width:0; height:0; }
+    .toggle-track { position:absolute; cursor:pointer; inset:0; background:var(--card3);
+                    border-radius:23px; transition:.25s; }
+    .toggle-track::before { content:''; position:absolute; height:17px; width:17px;
+                            left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.25s; }
+    input:checked   + .toggle-track              { background:var(--purple); }
+    input:checked   + .toggle-track::before      { transform:translateX(19px); }
+    input:disabled  + .toggle-track              { opacity:.45; cursor:not-allowed; }
+
+    /* ── Reset ── */
+    .reset-row   { display:flex; flex-direction:column; gap:8px; }
+    .reset-input { width:100%; padding:10px 13px; background:var(--card2); border:1px solid rgba(255,255,255,.1);
+                   border-radius:var(--radius); color:var(--text); font-family:'Nunito',sans-serif;
+                   font-size:.88rem; font-weight:700; outline:none; }
+    .reset-input:focus { border-color:var(--red); }
+    .reset-btn { width:100%; padding:10px 15px; background:rgba(248,113,113,.15); border:1px solid rgba(248,113,113,.3);
+                 border-radius:var(--radius); color:var(--red); font-family:'Fredoka One',cursive;
+                 font-size:.9rem; cursor:pointer; transition:background .15s; }
+    .reset-btn:hover { background:rgba(248,113,113,.25); }
+
+    /* ── Roster table ── */
+    .roster-table { width:100%; border-collapse:collapse; }
+    .roster-table th { text-align:left; font-size:.68rem; font-weight:800; letter-spacing:.1em;
+                       text-transform:uppercase; color:var(--muted); padding:0 10px 11px;
+                       border-bottom:1px solid rgba(255,255,255,.07); }
+    .roster-table td { padding:11px 10px; border-bottom:1px solid rgba(255,255,255,.05);
+                       font-weight:700; vertical-align:middle; font-size:.88rem; }
+    .roster-table tr:last-child td { border-bottom:none; }
+    .roster-table tr:nth-child(1) td { color:var(--amber); }
+
+    .title-text  { font-size:.75rem; color:var(--amber); font-weight:700; }
+    .xp-mini     { height:4px; background:var(--card2); border-radius:100px; overflow:hidden; margin-top:4px; min-width:80px; }
+    .xp-mini-fill{ height:100%; background:linear-gradient(90deg,#f59e0b,#fbbf24); border-radius:100px; }
+
+    .del-btn { background:none; border:1px solid rgba(248,113,113,.25); border-radius:8px;
+               color:rgba(248,113,113,.5); font-size:.75rem; padding:4px 9px; cursor:pointer;
+               font-family:'Nunito',sans-serif; font-weight:800; transition:all .15s;
+               white-space:nowrap; opacity:0; pointer-events:none; }
+    .del-btn.visible { opacity:1; pointer-events:auto; }
+    .del-btn:hover { background:rgba(248,113,113,.15); color:var(--red); border-color:var(--red); }
+    .award-btn { background:none; border:1px solid rgba(245,158,11,.2); border-radius:8px;
+                 color:rgba(245,158,11,.5); font-size:.75rem; padding:4px 9px; cursor:pointer;
+                 font-family:'Nunito',sans-serif; font-weight:800; transition:all .15s;
+                 white-space:nowrap; opacity:0; pointer-events:none; margin-right:4px; }
+    .award-btn.visible { opacity:1; pointer-events:auto; }
+    .award-btn:hover   { background:rgba(245,158,11,.15); color:var(--amber); border-color:var(--amber); }
+    .award-btn:disabled{ opacity:.4; cursor:not-allowed; }
+
+    /* ── XP History ── */
+    .hist-section { margin-top:14px; }
+    .hist-empty   { color:var(--muted); font-size:.78rem; font-weight:700; text-align:center; padding:12px; }
+    .hist-list    { display:flex; flex-direction:column; gap:5px; max-height:220px; overflow-y:auto; }
+    .hist-row     { display:flex; align-items:center; gap:10px; padding:7px 10px;
+                    background:var(--card2); border-radius:8px; font-size:.78rem; }
+    .hist-name    { font-weight:800; flex:1; }
+    .hist-delta   { font-family:'Fredoka One',cursive; font-size:.95rem; min-width:52px; text-align:right; }
+    .hist-reason  { color:var(--muted); font-weight:700; flex:2; font-size:.72rem; }
+    .hist-ts      { color:var(--muted); font-size:.65rem; font-weight:700; white-space:nowrap; }
+
+    .roster-empty { text-align:center; color:var(--muted); font-weight:700; padding:32px; }
+
+    /* ── Refresh bar ── */
+    .refresh-bar  { height:3px; background:var(--card); border-radius:100px; overflow:hidden; margin-bottom:18px; }
+    .refresh-fill { height:100%; background:var(--purple); border-radius:100px; transition:width .3s linear; }
+
+    /* ── Difficulty throttle ── */
+    .diff-seg { display:flex; border-radius:var(--radius); overflow:hidden; border:1px solid rgba(255,255,255,.09); }
+    .diff-seg-btn { flex:1; padding:11px 6px; text-align:center; cursor:pointer; font-size:.78rem;
+                    font-weight:800; border:none; background:var(--card2); color:var(--muted);
+                    transition:background .2s,color .2s; font-family:'Nunito',sans-serif; line-height:1.3;
+                    border-right:1px solid rgba(255,255,255,.06); }
+    .diff-seg-btn:last-child { border-right:none; }
+    .diff-seg-btn:disabled   { opacity:.45; cursor:not-allowed; }
+    .diff-seg-btn:not(:disabled):hover { filter:brightness(1.1); }
+    .diff-seg-btn.ds-active-0 { background:rgba(74,222,128,.18);  color:#4ade80; }
+    .diff-seg-btn.ds-active-1 { background:rgba(251,191,36,.18);  color:#fbbf24; }
+    .diff-seg-btn.ds-active-2 { background:rgba(168,85,247,.18);  color:#a855f7; }
+    .diff-note { font-size:.7rem; color:var(--muted); font-weight:700; margin-top:10px; text-align:center; min-height:1.2em; }
+
+    /* ── Diagnostics ── */
+    .diag-empty { text-align:center; color:var(--muted); font-weight:700; padding:24px 12px; font-size:.85rem; line-height:2; }
+
+    /* View toggle */
+    .diag-view-toggle { display:flex; gap:0; border-radius:var(--radius); overflow:hidden;
+                        border:1px solid rgba(255,255,255,.08); margin-bottom:16px; width:fit-content; }
+    .dvt-btn { padding:7px 16px; background:var(--card2); border:none; color:var(--muted);
+               font-family:'Nunito',sans-serif; font-weight:800; font-size:.75rem; cursor:pointer;
+               border-right:1px solid rgba(255,255,255,.06); transition:background .15s,color .15s; }
+    .dvt-btn:last-child { border-right:none; }
+    .dvt-btn.active { background:var(--card3); color:var(--text); }
+
+    /* Legend */
+    .diag-legend { display:flex; gap:14px; font-size:.68rem; font-weight:800; margin-bottom:14px; letter-spacing:.05em; }
+    .diag-legend span { display:flex; align-items:center; gap:5px; }
+    .diag-legend span::before { content:''; display:inline-block; width:10px; height:10px; border-radius:50%; }
+    .diag-legend .l-red::before    { background:#f87171; }
+    .diag-legend .l-amber::before  { background:#f59e0b; }
+    .diag-legend .l-green::before  { background:#4ade80; }
+
+    /* Needs Attention banner */
+    .attn-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:10px; margin-bottom:20px; }
+    .attn-card { background:rgba(248,113,113,.07); border:1px solid rgba(248,113,113,.3);
+                 border-radius:var(--radius); padding:12px 14px; }
+    .attn-hdr  { font-weight:800; font-size:.8rem; margin-bottom:2px; }
+    .attn-diff { font-size:.65rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
+                 color:var(--muted); margin-bottom:7px; }
+    .attn-rate { font-family:'Fredoka One',cursive; font-size:1.6rem; color:#f87171; line-height:1; }
+    .attn-sub  { font-size:.68rem; color:var(--muted); font-weight:700; margin-top:4px; }
+
+    /* Card grid */
+    .diag-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:10px; }
+    .diag-unit { background:var(--card2); border-radius:var(--radius); padding:14px 15px;
+                 border:1px solid rgba(255,255,255,.06); }
+    .diag-unit-hdr  { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:4px; }
+    .diag-unit-name { font-weight:800; font-size:.78rem; line-height:1.35; flex:1; }
+    .diag-miss-pct  { font-family:'Fredoka One',cursive; font-size:1.05rem; white-space:nowrap; }
+    .diag-student-ctx { font-size:.65rem; color:var(--muted); font-weight:700; margin-bottom:7px; }
+    .diag-bar       { height:6px; background:var(--card3); border-radius:100px; overflow:hidden; margin-bottom:9px; }
+    .diag-bar-fill  { height:100%; border-radius:100px; }
+    .diag-diffs     { display:flex; flex-direction:column; gap:5px; }
+    .diag-diff-row  { display:flex; align-items:center; gap:7px; }
+    .diag-diff-lbl  { font-size:.62rem; font-weight:800; letter-spacing:.07em; text-transform:uppercase; width:40px; flex-shrink:0; }
+    .diag-diff-bar  { flex:1; height:4px; background:var(--card3); border-radius:100px; overflow:hidden; }
+    .diag-diff-fill { height:100%; border-radius:100px; }
+    .diag-diff-pct  { font-size:.7rem; font-weight:800; width:28px; text-align:right; }
+    .diag-diff-ctx  { font-size:.61rem; color:var(--muted); font-weight:700; min-width:60px; }
+    .diag-at-risk   { margin-top:8px; padding-top:7px; border-top:1px solid rgba(255,255,255,.06);
+                      font-size:.68rem; font-weight:700; color:#f87171; line-height:1.7; }
+    .diag-prereq    { margin-top:5px; font-size:.66rem; font-weight:700; color:var(--blue); }
+    .diag-total     { font-size:.62rem; color:var(--muted); font-weight:700; margin-top:6px; text-align:right; }
+
+    /* Heatmap view */
+    #diagHeatmap { display:none; overflow-x:auto; }
+    .heat-table { width:100%; border-collapse:collapse; font-size:.78rem; }
+    .heat-table th { text-align:left; padding:6px 10px; font-size:.65rem; font-weight:800;
+                     letter-spacing:.08em; text-transform:uppercase; color:var(--muted);
+                     border-bottom:1px solid rgba(255,255,255,.07); }
+    .heat-table td { padding:8px 10px; border-bottom:1px solid rgba(255,255,255,.04); }
+    .heat-table tr:last-child td { border-bottom:none; }
+    .heat-cell { display:inline-block; padding:4px 10px; border-radius:6px;
+                 font-family:'Fredoka One',cursive; font-size:.9rem; min-width:52px; text-align:center; }
+    .heat-cell.h-red   { background:rgba(248,113,113,.2); color:#f87171; }
+    .heat-cell.h-amber { background:rgba(245,158,11,.18); color:#f59e0b; }
+    .heat-cell.h-green { background:rgba(74,222,128,.15);  color:#4ade80; }
+    .heat-cell.h-none  { color:var(--muted); font-family:'Nunito',sans-serif; font-size:.75rem; }
+
+    /* ── Footer ── */
+    .footer { margin-top:24px; text-align:center; }
+    .game-link { display:inline-block; font-family:'Fredoka One',cursive; font-size:1rem;
+                 background:linear-gradient(135deg,#f59e0b,#d97706); color:#fff;
+                 padding:12px 28px; border-radius:var(--radius); text-decoration:none;
+                 box-shadow:0 4px 18px rgba(245,158,11,.35); transition:transform .15s, filter .15s; }
+    .game-link:hover { transform:translateY(-2px); filter:brightness(1.1); }
+
+    /* ── Teacher Nav Tabs ── */
+    .teacher-nav { display:flex; gap:10px; margin-bottom:22px; border-bottom:2px solid rgba(255,255,255,.08); padding-bottom:12px; flex-wrap:wrap; }
+    .tnav-btn { padding:10px 20px; border-radius:12px; background:var(--card); border:1.5px solid rgba(255,255,255,.1); color:var(--muted); font-family:'Fredoka One',cursive; font-size:.95rem; cursor:pointer; transition:all .15s; display:flex; align-items:center; gap:8px; }
+    .tnav-btn:hover { color:var(--text); border-color:rgba(255,255,255,.25); }
+    .tnav-btn.active { color:#1c1917; background:var(--amber); border-color:var(--amber); box-shadow:0 4px 14px rgba(245,158,11,.35); }
+
+    /* ── Room & Quiz Styles ── */
+    .field-label { display:block; font-size:.75rem; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; margin-bottom:6px; }
+    .text-input { width:100%; padding:10px 14px; border-radius:10px; background:var(--card2); border:1px solid rgba(255,255,255,.12); color:var(--text); font-family:'Nunito',sans-serif; font-size:.92rem; font-weight:700; margin-bottom:14px; box-sizing:border-box; }
+    .text-input:focus { border-color:var(--purple); outline:none; }
+    .select-input { width:100%; padding:10px 14px; border-radius:10px; background:var(--card2); border:1px solid rgba(255,255,255,.12); color:var(--text); font-family:'Nunito',sans-serif; font-size:.92rem; font-weight:700; margin-bottom:14px; box-sizing:border-box; cursor:pointer; }
+    .btn-action { padding:10px 18px; border-radius:10px; font-family:'Fredoka One',cursive; font-size:.9rem; border:none; cursor:pointer; transition:all .15s; }
+    .btn-amber-act { background:var(--amber); color:#1c1917; }
+    .btn-amber-act:hover { filter:brightness(1.1); transform:translateY(-1px); }
+    .btn-purple-act { background:var(--purple); color:#fff; }
+    .btn-purple-act:hover { filter:brightness(1.1); transform:translateY(-1px); }
+    .btn-ghost-act { background:rgba(255,255,255,.08); color:var(--muted); border:1px solid rgba(255,255,255,.15); }
+    .btn-ghost-act:hover { color:var(--text); background:rgba(255,255,255,.12); }
+    
+    .room-pin-big { font-family:'Fredoka One',cursive; font-size:3.8rem; color:var(--amber); letter-spacing:.15em; text-shadow:0 0 24px rgba(245,158,11,.4); line-height:1; margin:8px 0; }
+    .choice-host-card { padding:12px 14px; border-radius:12px; background:var(--card2); border:1.5px solid rgba(255,255,255,.08); font-weight:800; font-size:.9rem; margin-bottom:8px; display:flex; align-items:center; gap:10px; }
+    .choice-host-card.correct { border-color:#4ade80; background:rgba(74,222,128,.15); color:#4ade80; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo-small">Đấu Trường Toán 6</div>
+    <div class="header-sub">Bảng Quản Trị Giáo Viên · {{ session.get('username', 'Giáo Viên') }}</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <div style="padding:5px 12px;border-radius:100px;background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.4);font-weight:800;font-size:.78rem;color:#4ade80">
+      👨‍🏫 {{ session.get('username', 'Giáo Viên') }} (Giáo Viên)
+    </div>
+    <a href="/display" target="_blank"
+       style="font-family:'Fredoka One',cursive;font-size:.9rem;background:linear-gradient(135deg,#a855f7,#7c3aed);
+              color:#fff;padding:9px 18px;border-radius:12px;text-decoration:none;
+              box-shadow:0 3px 12px rgba(168,85,247,.35);transition:transform .15s,filter .15s"
+       onmouseover="this.style.filter='brightness(1.12)'" onmouseout="this.style.filter=''">
+      📺 Màn Hình Trình Chiếu
+    </a>
+    <a href="/"
+       style="font-family:'Nunito',sans-serif;font-weight:800;font-size:.82rem;color:var(--muted);
+              text-decoration:none;border:1px solid var(--line);padding:8px 14px;border-radius:10px"
+       onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">
+      🎮 Giao Diện Học Sinh
+    </a>
+    <a href="/teacher/logout"
+       style="font-family:'Nunito',sans-serif;font-weight:800;font-size:.82rem;color:#f87171;
+              text-decoration:none;border:1px solid rgba(248,113,113,.3);padding:8px 14px;border-radius:10px"
+       onmouseover="this.style.background='rgba(248,113,113,.1)'" onmouseout="this.style.background=''">
+      Đăng xuất
+    </a>
+  </div>
+</header>
+
+<!-- Navigation Tabs -->
+<div class="teacher-nav">
+  <button class="tnav-btn active" id="tabBtnRoom" onclick="switchTeacherTab('room')">🎮 Đấu Trường Trực Tiếp (Live Quiz)</button>
+  <button class="tnav-btn" id="tabBtnQuiz" onclick="switchTeacherTab('quiz')">✍️ Soạn & Quản Lý Đề Thi</button>
+  <button class="tnav-btn" id="tabBtnClass" onclick="switchTeacherTab('class')">📊 Quản Lý & Chẩn Đoán Lớp</button>
+</div>
+
+{% if msg == 'cleared' %}
+  <div class="flash flash-ok">✅ Đã đặt lại toàn bộ dữ liệu học sinh. Các chương đã về mặc định.</div>
+{% elif msg == 'wrong' %}
+  <div class="flash flash-err">❌ Sai mật khẩu giáo viên — không có thay đổi nào được thực hiện.</div>
+{% endif %}
+
+<div class="refresh-bar" id="rbarWrap"><div class="refresh-fill" id="rfill" style="width:100%"></div></div>
+
+<!-- ══ TAB 1: LIVE QUIZ ROOM VIEW ═══════════════════════════ -->
+<div id="teacherRoomView">
+  <!-- 1. Form Tạo Phòng Mới -->
+  <div id="hostCreateCard" class="card" style="max-width:720px;margin:0 auto 20px">
+    <div class="card-title">🚀 Tạo Phòng Thi Đấu Trực Tiếp Mới</div>
+    <p style="font-size:.84rem;color:var(--muted);font-weight:700;margin-bottom:18px">
+      Khởi tạo phòng đấu để học sinh toàn lớp nhập mã PIN cùng thi đấu theo thời gian thực (tương tự Kahoot/Quizizz).
+    </p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px">
+      <div>
+        <label class="field-label">Tên Phòng Đấu</label>
+        <input type="text" id="hostTitle" class="text-input" value="Đấu Trường Toán 6 - Lớp Học">
+      </div>
+      <div>
+        <label class="field-label">Nguồn Đề Thi</label>
+        <select id="hostSourceType" class="select-input" onchange="onSourceTypeChange()">
+          <option value="c1">Chương 1: Tập Hợp & Số Tự Nhiên</option>
+          <option value="c2">Chương 2: Số Nguyên</option>
+          <option value="c3">Chương 3: Hình Học Trực Quan</option>
+          <option value="c4">Chương 4: Thống Kê & Xác Suất</option>
+          <option value="c5">Chương 5: Phân Số & Số Thập Phân</option>
+          <option value="c6">Chương 6: Hình Học Phẳng (Điểm, Đường thẳng, Góc)</option>
+          <option value="c7">Chương 7: Tính Đối Xứng (Trục & Tâm)</option>
+          <option value="c8">Chương 8: Ôn Tập Cuối Năm</option>
+          <option value="custom">-- Chọn Bộ Đề Tự Soạn Của Giáo Viên --</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Dropdown chọn đề tự soạn (chỉ hiện khi chọn custom) -->
+    <div id="hostCustomQuizWrap" style="display:none;margin-bottom:14px">
+      <label class="field-label">Chọn Bộ Đề Đã Soạn</label>
+      <select id="hostCustomQuizSelect" class="select-input">
+        <option value="">(Đang tải danh sách bộ đề…)</option>
+      </select>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+      <div>
+        <label class="field-label">Số Lượng Câu Hỏi</label>
+        <select id="hostNumQ" class="select-input">
+          <option value="5">5 câu (Đấu nhanh)</option>
+          <option value="10" selected>10 câu (Tiêu chuẩn)</option>
+          <option value="15">15 câu</option>
+          <option value="20">20 câu (Kiểm tra)</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label">Thời Gian Mỗi Câu</label>
+        <select id="hostTimePerQ" class="select-input">
+          <option value="15">15 giây / câu (Căng thẳng)</option>
+          <option value="30" selected>30 giây / câu (Chuẩn)</option>
+          <option value="45">45 giây / câu</option>
+          <option value="60">60 giây / câu (Thoải mái)</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="btn-action btn-amber-act" style="width:100%;padding:14px;font-size:1.05rem" onclick="hostCreateRoom()">
+      ⚔️ Tạo Phòng & Mở Sảnh Chờ →
+    </button>
+  </div>
+
+  <!-- 2. Sảnh Chờ Giáo Viên (Lobby Screen) -->
+  <div id="hostLobbyCard" class="card" style="display:none;max-width:760px;margin:0 auto 20px;text-align:center">
+    <div style="font-size:.78rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">
+      Sảnh Chờ Thi Đấu Trực Tiếp
+    </div>
+    <div class="card-title" id="hostLobbyTitle" style="font-size:1.4rem;color:var(--text);margin-bottom:12px">Đấu Trường Toán 6</div>
+
+    <div style="background:var(--card2);border-radius:18px;padding:20px;margin-bottom:20px;border:1.5px solid rgba(255,255,255,.08)">
+      <div style="font-size:.82rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.12em">MÃ PHÒNG (ROOM PIN)</div>
+      <div class="room-pin-big" id="hostRoomCodeDisplay">000000</div>
+      <div style="display:flex;justify-content:center;gap:12px;margin-top:10px">
+        <button class="btn-action btn-ghost-act" onclick="copyRoomCode()">📋 Sao Chép Mã</button>
+        <button class="btn-action btn-ghost-act" onclick="copyRoomLink()">🔗 Sao Chép Link Học Sinh</button>
+      </div>
+      <p style="font-size:.8rem;color:var(--muted);margin-top:10px;font-weight:700">
+        Học sinh truy cập trang chủ và nhập mã 6 số ở trên để tham gia!
+      </p>
+    </div>
+
+    <div style="background:var(--card2);border-radius:18px;padding:18px;margin-bottom:24px;border:1px solid rgba(255,255,255,.06)">
+      <div style="font-size:.78rem;font-weight:800;color:#4ade80;text-transform:uppercase;margin-bottom:12px">
+        👥 Học Sinh Đang Trong Phòng: <span id="hostPlayerCount">0</span> bạn
+      </div>
+      <div id="hostPlayersList" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-height:220px;overflow-y:auto">
+        <span style="color:var(--muted);font-size:.85rem;font-weight:700">Chưa có học sinh nào vào phòng…</span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px">
+      <button class="btn-action btn-ghost-act" style="flex:1" onclick="cancelRoom()">✕ Hủy Phòng</button>
+      <button class="btn-action btn-amber-act" style="flex:2;padding:14px;font-size:1.1rem" onclick="hostStartMatch()">🚀 BẮT ĐẦU TRẬN ĐẤU ⚔️</button>
+    </div>
+  </div>
+
+  <!-- 3. Màn Hình Điều Khiển Trận Đấu (Live Host View) -->
+  <div id="hostMatchCard" class="card" style="display:none;max-width:860px;margin:0 auto 20px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <div>
+        <span id="hostMatchQNum" style="font-family:'Fredoka One',cursive;font-size:1.2rem;color:var(--amber)">Câu 1 / 10</span>
+        <span id="hostMatchTitle" style="color:var(--muted);font-weight:800;font-size:.85rem;margin-left:10px">...</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="auto-badge" id="hostAnsweredBadge">Đã nộp: 0 / 0</span>
+        <span id="hostTimeBadge" style="font-family:'Fredoka One',cursive;font-size:1.1rem;color:#f87171;background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.3);padding:4px 14px;border-radius:100px">Còn 30s</span>
+      </div>
+    </div>
+
+    <!-- Question Box -->
+    <div style="background:var(--card2);border-radius:16px;padding:22px;border:1.5px solid rgba(255,255,255,.1);margin-bottom:18px">
+      <div id="hostQuestionText" style="font-size:1.2rem;font-weight:800;line-height:1.5;color:var(--text);margin-bottom:16px">Đang tải…</div>
+      <div id="hostChoicesGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
+      
+      <!-- Explanation box (revealed on show_result) -->
+      <div id="hostWhyBox" style="display:none;margin-top:16px;padding:14px;border-radius:12px;background:rgba(96,165,250,.12);border:1px solid rgba(96,165,250,.35)">
+        <span style="font-size:1.1rem">💡</span> <span id="hostWhyText" style="font-size:.9rem;font-weight:700;color:var(--text);line-height:1.5"></span>
+      </div>
+    </div>
+
+    <!-- Live Leaderboard preview -->
+    <div style="background:var(--card2);border-radius:16px;padding:16px;border:1px solid rgba(255,255,255,.08);margin-bottom:18px">
+      <div style="font-size:.78rem;font-weight:800;color:var(--amber);text-transform:uppercase;margin-bottom:10px">
+        🏆 Bảng Xếp Hạng Trực Tiếp (Top 10)
+      </div>
+      <div id="hostLeaderboardList" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+    </div>
+
+    <!-- Controls -->
+    <div style="display:flex;gap:12px;justify-content:space-between">
+      <button class="btn-action btn-ghost-act" onclick="hostEndMatchEarly()">Kết Thúc Sớm</button>
+      <div style="display:flex;gap:10px">
+        <button id="btnHostShowResult" class="btn-action btn-purple-act" onclick="hostShowResult()">💡 Hiện Đáp Án & Lời Giải</button>
+        <button id="btnHostNextQ" class="btn-action btn-amber-act" onclick="hostNextQuestion()">Câu Tiếp Theo ➔</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Màn Hình Tổng Kết Trận Đấu (Podium Host View) -->
+  <div id="hostPodiumCard" class="card" style="display:none;max-width:760px;margin:0 auto 20px;text-align:center">
+    <div style="font-size:4rem;margin-bottom:8px">🏆</div>
+    <div class="card-title" style="font-size:1.6rem;color:var(--text);margin-bottom:6px">Vinh Danh Nhà Vô Địch!</div>
+    <p style="font-size:.85rem;color:var(--muted);font-weight:700;margin-bottom:20px">Trận đấu đã khép lại với những màn so tài kịch tính!</p>
+
+    <!-- Podium Top 3 -->
+    <div id="hostPodiumWrap" style="display:flex;justify-content:center;align-items:flex-end;gap:14px;margin-bottom:28px"></div>
+
+    <div style="background:var(--card2);border-radius:14px;padding:12px 18px;margin-bottom:24px;border:1px solid rgba(74,222,128,.3);color:#4ade80;font-weight:800;font-size:.85rem">
+      ✅ Hệ thống đã tự động cộng điểm kinh nghiệm (XP) và Vàng (Coins) thưởng vào hồ sơ RPG của toàn bộ học sinh tham gia!
+    </div>
+
+    <button class="btn-action btn-amber-act" style="padding:12px 28px;font-size:1rem" onclick="resetToCreateRoom()">
+      ➕ Tạo Phòng Đấu Mới
+    </button>
+  </div>
+</div>
+
+<!-- ══ TAB 2: CUSTOM QUIZ BUILDER VIEW ══════════════════════ -->
+<div id="teacherQuizView" style="display:none">
+  <!-- Danh sách các bộ đề -->
+  <div id="quizListView" class="card" style="max-width:860px;margin:0 auto 20px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px">
+      <div>
+        <div class="card-title" style="margin-bottom:4px">✍️ Ngân Hàng Đề Thi Tùy Biến</div>
+        <p style="font-size:.8rem;color:var(--muted);font-weight:700">Giáo viên có thể tự soạn đề, tạo câu hỏi trắc nghiệm và sử dụng để tổ chức thi đấu.</p>
+      </div>
+      <button class="btn-action btn-purple-act" onclick="openNewQuizEditor()">➕ Soạn Bộ Đề Mới</button>
+    </div>
+
+    <div id="customQuizzesList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px">
+      <div style="color:var(--muted);padding:30px;text-align:center;grid-column:1/-1">Đang tải danh sách bộ đề…</div>
+    </div>
+  </div>
+
+  <!-- Form Soạn / Chỉnh sửa đề thi -->
+  <div id="quizEditorCard" class="card" style="display:none;max-width:860px;margin:0 auto 20px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div class="card-title" id="editorTitle" style="margin-bottom:0">Soạn Bộ Đề Mới</div>
+      <button class="btn-action btn-ghost-act" onclick="closeQuizEditor()">← Quay Lại</button>
+    </div>
+
+    <input type="hidden" id="editingQuizId" value="">
+    <div style="margin-bottom:14px">
+      <label class="field-label">Tiêu Đề Bộ Đề</label>
+      <input type="text" id="editorQuizTitle" class="text-input" placeholder="Ví dụ: Kiểm tra 15 phút Số Nguyên Toán 6…">
+    </div>
+    <div style="margin-bottom:20px">
+      <label class="field-label">Mô Tả Bộ Đề</label>
+      <input type="text" id="editorQuizDesc" class="text-input" placeholder="Mô tả ngắn gọn về phạm vi kiến thức…">
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;border-top:1px solid rgba(255,255,255,.08);padding-top:16px">
+      <div style="font-family:'Fredoka One',cursive;font-size:1.05rem;color:var(--text)">Danh Sách Câu Hỏi Trắc Nghiệm</div>
+      <button class="btn-action btn-purple-act" style="font-size:.8rem;padding:7px 14px" onclick="addQuestionRow()">➕ Thêm Câu Hỏi</button>
+    </div>
+
+    <div id="editorQuestionsContainer" style="display:flex;flex-direction:column;gap:16px;margin-bottom:24px"></div>
+
+    <div style="display:flex;gap:12px;justify-content:flex-end">
+      <button class="btn-action btn-ghost-act" onclick="closeQuizEditor()">Hủy Bỏ</button>
+      <button class="btn-action btn-amber-act" style="padding:12px 24px" onclick="saveCustomQuiz()">💾 Lưu Bộ Đề Vào Hệ Thống</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB 3: CLASS MANAGEMENT & DIAGNOSTICS VIEW ════════════ -->
+<div id="teacherClassView" style="display:none">
+<!-- Stats -->
+<div class="stats">
+  <div class="stat-card">
+    <div class="stat-val" style="color:var(--purple)">{{ char_count }}</div>
+    <div class="stat-lbl">Học Sinh</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-val" style="color:var(--amber)">{{ total_rounds }}</div>
+    <div class="stat-lbl">Ván Đã Đấu</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-val" style="color:var(--green)">{{ max_level }}</div>
+    <div class="stat-lbl">Cấp Cao Nhất</div>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- ══ LEFT COLUMN ══════════════════════════════════════ -->
+  <div>
+
+    <!-- QR Code -->
+    <div class="card">
+      <div class="card-title">📱 Tham Gia Đấu Trường</div>
+      <div class="qr-wrap"><img src="data:image/png;base64,{{ qr }}" alt="Mã QR tham gia"></div>
+      <div class="url-box">{{ url }}</div>
+
+      <div id="connPanel" class="conn-panel">
+        <div class="conn-hdr">📶 Cách học sinh kết nối</div>
+        <div class="conn-addrs" id="connAddrs"></div>
+        <div class="conn-status" id="connStatus">Đang kiểm tra…</div>
+        <div class="conn-list" id="connList"></div>
+        <div class="conn-help" id="connHelp"></div>
+      </div>
+      <p class="hint">Học sinh quét mã QR hoặc nhập địa chỉ URL<br>vào trình duyệt qua Wi-Fi của lớp học</p>
+    </div>
+
+    <!-- Module settings -->
+    <div class="card">
+      <div class="card-title">📚 Chương Trình Môn Toán Lớp 6</div>
+
+      <!-- Difficulty is chosen by each student; this reports what they picked -->
+      <div style="margin-bottom:18px">
+        <div style="font-size:.68rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">🎯 Mức Thử Thách — Học sinh tự chọn</div>
+        <div class="diff-seg">
+          {% for d in diff_spread %}
+          <div class="diff-seg-btn" style="cursor:default">
+            {{ d.icon }} {{ d.label }}<br>
+            <span style="font-family:'Fredoka One',cursive;font-size:1.15rem">{{ d.count }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="diff-note">
+          Học sinh tự chọn mức độ cho mình. Mức Khó mang lại nhiều điểm XP hơn giúp lên cấp nhanh hơn.
+        </div>
+      </div>
+
+      <div class="unlock-row">
+        <span class="unlock-status unlocked" id="lockStatus">🔓 Đang Mở Khóa</span>
+        <button class="unlock-btn" id="unlockBtn" onclick="unlockPanel()">🔒 Khóa Bảng</button>
+      </div>
+
+      <div class="module-list" id="moduleList">
+        {# unit_groups is passed in from app.py's UNITS catalog #}
+        {% for gid, gnum, gname, gcolor, gicon, en_url, es_url, subs in unit_groups %}
+        <div class="mod-grp-hdr">
+          <span style="font-size:1rem">{{ gicon }}</span>
+          <span class="mod-grp-num">Chương {{ gnum }}</span>
+          <span class="mod-grp-name" style="color:{{ gcolor }}">{{ gname }}</span>
+          <div class="mod-grp-btns">
+            <button class="mod-grp-btn" id="gbtn-{{ gid }}-on"  onclick="setGroup('{{ gid }}',true)" >Bật Hết</button>
+            <button class="mod-grp-btn" id="gbtn-{{ gid }}-off" onclick="setGroup('{{ gid }}',false)">Tắt Hết</button>
+          </div>
+        </div>
+        {% for uid, uname in subs %}
+        <div class="module-row {{ 'enabled' if settings.get(uid, False) else 'disabled' }}" id="mrow-{{ uid }}">
+          <div class="module-info">
+            <div class="module-name">{{ uname }}</div>
+          </div>
+          <label class="toggle-wrap">
+            <input type="checkbox" id="tog-{{ uid }}" data-unit="{{ uid }}" data-parent="{{ gid }}"
+                   {{ 'checked' if settings.get(uid, False) else '' }}
+                   onchange="onToggle(this)">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        {% endfor %}
+        {% endfor %}
+      </div>
+
+      <p style="font-size:.7rem;color:var(--muted);font-weight:700;margin-top:14px;text-align:center">
+        Các bài học được bật sẽ xuất hiện ngay lập tức trên màn hình học sinh
+      </p>
+    </div>
+
+    <!-- Reset all -->
+    <div class="card">
+      <div class="card-title">⚠️ Đặt Lại Toàn Bộ Dữ Liệu</div>
+      <p style="font-size:.78rem;color:var(--muted);font-weight:700;margin-bottom:12px">
+        Xóa tất cả tài khoản học sinh và điểm số của lớp. Không thể hoàn tác.
+      </p>
+      <form method="POST" action="/teacher/reset"
+            onsubmit="return confirm('Xóa TẤT CẢ nhân vật và điểm số? Hành động này không thể hoàn tác.')">
+        <div class="reset-row">
+          <input class="reset-input" type="password" name="password" placeholder="Mật khẩu giáo viên…" required>
+          <button class="reset-btn" type="submit">Đặt Lại</button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+
+  <!-- ══ RIGHT COLUMN — ROSTER ════════════════════════════ -->
+  <div class="card">
+    <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">
+      <span>⚔️ Danh Sách Học Sinh</span>
+      <span style="font-size:.72rem;color:var(--muted);font-weight:700" id="deleteHint">Bấm ✕ để xóa học sinh</span>
+    </div>
+    {% if chars %}
+    <div style="margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:.78rem;color:var(--muted);font-weight:700">· Tổng cộng: {{ char_count }} học sinh</span>
+    </div>
+    {% endif %}
+
+    {% set level_titles = ['','Học Đồng Toán Học','Tập Sự Khám Phá','Trinh Sát Số Học','Hiệp Sĩ Số Tự Nhiên','Phù Thủy Đại Số',
+                           'Chiến Binh Phân Số','Dũng Sĩ Hình Học','Bậc Thầy Đo Lường','Quán Quân Đấu Trường',
+                           'Đại Pháp Sư Toán Học','Hiền Triết Thông Thái','Huyền Thoại Toán Học'] %}
+    {% set level_emojis = ['','🧑','📚','🗺️','⚔️','🔮','🏹','🛡️','✨','🏆','🧙','⚡','🌟'] %}
+    {% set level_xp     = [0,0,900,2100,3900,6300,9300,12900,17100,21900,27600,34500,43500,99999] %}
+
+    {% if chars %}
+    <table class="roster-table">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Học Sinh</th>
+          <th>Danh Hiệu &amp; XP</th>
+          <th>Vật Phẩm</th>
+          <th>Ván Đấu</th>
+          <th>Mức Độ</th>
+          <th>Mã PIN</th>
+          <th>Lần Cuối</th>
+          <th colspan="2">Thao Tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% set medals = ['🥇','🥈','🥉'] %}
+        {% for c in chars %}
+        {% set lv = [c.level, 12]|min %}
+        {% set prev_xp = level_xp[lv] %}
+        {% set next_xp = level_xp[[lv+1,13]|min] %}
+        {% set pct = [([((c.xp - prev_xp) / (next_xp - prev_xp) * 100)|round|int, 0]|max), 100]|min if next_xp > prev_xp else 100 %}
+        <tr id="row-{{ c.name | replace(' ', '_') }}">
+          <td style="font-size:1.2rem">{{ medals[loop.index0] if loop.index0 < 3 else level_emojis[lv] }}</td>
+          <td style="font-weight:800">{{ c.name }}</td>
+          <td>
+            <div class="title-text">{{ level_titles[lv] }} · Cấp {{ lv }}</div>
+            <div class="xp-mini"><div class="xp-mini-fill" style="width:{{ pct }}%"></div></div>
+          </td>
+          <td style="color:var(--muted)">🎒 {{ c.item_count }}</td>
+          <td style="color:var(--muted)">{{ c.rounds }}</td>
+          <td style="font-size:.78rem;font-weight:800">
+            {%- if c.difficulty == 0 %}<span style="color:#4ade80">🟢 Dễ</span>
+            {%- elif c.difficulty == 1 %}<span style="color:#fbbf24">🟡 Vừa</span>
+            {%- else %}<span style="color:#f87171">🔴 Khó</span>{% endif -%}
+          </td>
+          <td style="font-family:monospace;font-weight:800;letter-spacing:.12em;color:var(--accent)">{{ c.pin }}</td>
+          <td style="color:var(--muted);font-size:.78rem">{{ c.last_played }}</td>
+          <td>
+            <button class="award-btn visible" id="award-{{ loop.index }}"
+                    data-action="award" data-name="{{ c.name }}">⭐ Thưởng</button>
+          </td>
+          <td>
+            <button class="del-btn visible" id="del-{{ loop.index }}"
+                    data-action="delete" data-name="{{ c.name }}">✕ Xóa</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="roster-empty">
+      Chưa có học sinh nào!<br>Chia sẻ mã QR hoặc URL ở trên để học sinh tham gia nhé. ⚔️
+    </div>
+    {% endif %}
+    <!-- XP Award History -->
+    <div class="card" style="margin-top:16px">
+      <div class="card-title">⭐ Lịch Sử Thưởng XP Gần Đây</div>
+      <div id="histContent">
+        <div class="hist-empty">Đang tải…</div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ══ DIAGNOSTICS ════════════════════════════════════════════ -->
+<div class="card" style="margin-top:18px">
+  <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+    <span>📊 Diagnostics</span>
+    {% if diag_data %}
+    <div class="diag-view-toggle">
+      <button class="dvt-btn active" id="dvt-cards"   onclick="diagView('cards')">Cards</button>
+      <button class="dvt-btn"        id="dvt-heatmap" onclick="diagView('heatmap')">Heatmap</button>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if diag_data %}
+
+  {# ── Needs Attention ── #}
+  {% if needs_attention %}
+  <div style="font-size:.68rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#f87171;margin-bottom:8px">
+    ⚠️ Needs Attention
+  </div>
+  <div class="attn-grid">
+    {% for a in needs_attention %}
+    <div class="attn-card">
+      <div class="attn-hdr">{{ a.unit_icon }} Chương {{ a.unit_num }}: {{ a.unit_name }}</div>
+      <div class="attn-diff">{{ a.difficulty }}</div>
+      <div class="attn-rate">{{ a.miss_rate }}%</div>
+      <div class="attn-sub">
+        {% if a.student_count > 0 %}{{ a.at_risk_count }} / {{ a.student_count }} học sinh gặp khó khăn{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="diag-legend">
+    <span class="l-red">≥ 60% cần trợ giúp</span>
+    <span class="l-amber">30–59% đang rèn luyện</span>
+    <span class="l-green">&lt; 30% đã thuần thục</span>
+  </div>
+
+  {# ── Cards view ── #}
+  <div id="diagCards" class="diag-grid">
+    {% for unit in diag_data %}
+    {%- set mc = '#f87171' if unit.overall_rate >= 60 else ('#f59e0b' if unit.overall_rate >= 30 else '#4ade80') -%}
+    <div class="diag-unit">
+      <div class="diag-unit-hdr">
+        <div class="diag-unit-name">{{ unit.icon }} Chương {{ unit.num }}: {{ unit.name }}</div>
+        <div class="diag-miss-pct" style="color:{{ mc }}">{{ unit.overall_rate }}%</div>
+      </div>
+      <div class="diag-student-ctx">
+        {{ unit.total_students }} học sinh đã thử · {{ unit.total_attempts }} lượt làm bài
+      </div>
+      <div class="diag-bar">
+        <div class="diag-bar-fill" style="width:{{ unit.overall_rate }}%;background:{{ mc }}"></div>
+      </div>
+      <div class="diag-diffs">
+        {% for d in unit.diffs %}
+        {%- set dc  = '#f87171' if d.miss_rate >= 60 else ('#f59e0b' if d.miss_rate >= 30 else '#4ade80') -%}
+        {%- set dlc = '#4ade80' if d.key == 'easy' else ('#f59e0b' if d.key == 'medium' else '#f87171') -%}
+        <div class="diag-diff-row">
+          <span class="diag-diff-lbl" style="color:{{ dlc }}">{{ d.label }}</span>
+          <div class="diag-diff-bar">
+            <div class="diag-diff-fill" style="width:{{ d.miss_rate }}%;background:{{ dc }}"></div>
+          </div>
+          <span class="diag-diff-pct" style="color:{{ dc }}">{{ d.miss_rate }}%</span>
+          <span class="diag-diff-ctx">
+            {% if d.student_count > 0 %}
+              {{ d.at_risk_here|length }} / {{ d.student_count }}
+            {% else %}—{% endif %}
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+      {% if unit.at_risk %}
+      <div class="diag-at-risk">
+        ⚠️ Cần chú ý hỗ trợ:
+        {% for s in unit.at_risk[:5] %}{{ s.name }}{% if not loop.last %}, {% endif %}{% endfor %}
+        {% if unit.at_risk|length > 5 %} +{{ unit.at_risk|length - 5 }} bạn khác{% endif %}
+      </div>
+      {% endif %}
+      {% if unit.prereq and unit.overall_rate >= 50 %}
+      <div class="diag-prereq">💡 Kiến thức nền tảng cần ôn: {{ unit.prereq[1] }}</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  {# ── Heatmap view ── #}
+  <div id="diagHeatmap">
+    <table class="heat-table">
+      <thead>
+        <tr>
+          <th>Chương</th>
+          <th>Dễ</th>
+          <th>Vừa</th>
+          <th>Khó</th>
+          <th>Chung</th>
+          <th>Học Sinh</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for unit in diag_data %}
+        {%- set diff_map = {} -%}
+        {%- for d in unit.diffs -%}{%- set _ = diff_map.update({d.key: d}) -%}{%- endfor -%}
+        <tr>
+          <td style="font-weight:800;font-size:.8rem">{{ unit.icon }} Chương {{ unit.num }}: {{ unit.name }}</td>
+          {% for key in ['easy','medium','hard'] %}
+          {%- if key in diff_map -%}
+          {%- set d = diff_map[key] -%}
+          {%- set hc = 'h-red' if d.miss_rate >= 60 else ('h-amber' if d.miss_rate >= 30 else 'h-green') -%}
+          <td><span class="heat-cell {{ hc }}">{{ d.miss_rate }}%</span></td>
+          {%- else -%}
+          <td><span class="heat-cell h-none">—</span></td>
+          {%- endif -%}
+          {% endfor %}
+          {%- set mc2 = 'h-red' if unit.overall_rate >= 60 else ('h-amber' if unit.overall_rate >= 30 else 'h-green') -%}
+          <td><span class="heat-cell {{ mc2 }}">{{ unit.overall_rate }}%</span></td>
+          <td style="color:var(--muted);font-size:.75rem;font-weight:700">{{ unit.total_students }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% else %}
+  <div class="diag-empty">
+    📭 Chưa có dữ liệu làm bài nào.<br>
+    Biểu đồ chẩn đoán sẽ tự động hiển thị khi học sinh bắt đầu thi đấu.
+  </div>
+  {% endif %}
+</div>
+</div> <!-- /#teacherClassView -->
+
+<div class="footer">
+  <a class="game-link" href="{{ url }}" target="_blank">🎮 Mở Giao Diện Học Sinh →</a>
+</div>
+
+<script>
+// Escape any server-supplied string before it reaches innerHTML.
+// Student names and award reasons are attacker-controlled.
+function esc(s){ return String(s ?? '')
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  .replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+// ── Connection diagnostics ────────────────────────────────
+// Answers the question a teacher cannot otherwise answer: has any student
+// device actually reached this server? If nothing ever appears here, the
+// problem is the network or the firewall, not the app.
+async function loadConnections(){
+  let d;
+  try{ d = await (await fetch('/api/connections')).json(); }catch{ return; }
+  if(!d.ok) return;
+
+  const urls = [`http://${d.hostname.replace(/\.local$/,'')}:${d.port}`,
+                ...d.addresses.map(a=>`http://${a}:${d.port}`)];
+  document.getElementById('connAddrs').innerHTML = urls.map(u=>`
+    <div class="conn-addr"><code>${esc(u)}</code>
+      <button class="conn-copy" title="Copy" data-url="${esc(u)}">📋</button></div>`).join('')
+    + (d.addresses.length > 1
+        ? `<div style="color:var(--muted);font-size:.7rem;margin-top:4px">More than one address — try each; a VPN can add one students cannot reach.</div>`
+        : '');
+  document.querySelectorAll('.conn-copy').forEach(b=>{
+    b.onclick = () => navigator.clipboard?.writeText(b.dataset.url);
+  });
+
+  const st = document.getElementById('connStatus');
+  if(d.other_count > 0){
+    st.className = 'conn-status conn-ok';
+    st.textContent = `✅ ${d.other_count} student device${d.other_count===1?'':'s'} reached this computer`;
+  } else {
+    st.className = 'conn-status conn-wait';
+    st.textContent = '⏳ No student device has connected yet';
+  }
+
+  document.getElementById('connList').innerHTML = d.devices.map(x=>`
+    <div class="conn-row">
+      <span class="cd">${esc(x.device)}${x.is_self?' (this computer)':''}</span>
+      <span>${esc(x.ip)}</span>
+      <span style="margin-left:auto">${x.ago < 10 ? 'just now' : x.ago+'s ago'}</span>
+    </div>`).join('');
+
+  document.getElementById('connHelp').innerHTML = d.other_count > 0 ? '' :
+    `Open this address on a phone or tablet joined to the same Wi-Fi — this panel
+     should tick over within a few seconds.`
+    + (d.windows ? `<br>If it does not, Windows Firewall is the usual cause. Ask IT to run:
+       <code>netsh advfirewall firewall add rule name="Math Quest" dir=in action=allow protocol=TCP localport=${d.port}</code>`
+                 : '');
+}
+loadConnections();
+setInterval(loadConnections, 5000);
+
+// ── Diagnostics view toggle ───────────────────────────────
+function diagView(v) {
+  document.getElementById('diagCards').style.display   = v === 'cards'   ? 'grid' : 'none';
+  document.getElementById('diagHeatmap').style.display = v === 'heatmap' ? 'block': 'none';
+  document.querySelectorAll('.dvt-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('dvt-' + v)?.classList.add('active');
+}
+
+// ── Auto-refresh countdown ────────────────────────────────
+const INTERVAL = 20;
+let remaining  = INTERVAL;
+const rfill    = document.getElementById('rfill');
+setInterval(() => {
+  if (typeof currentTeacherTab !== 'undefined' && currentTeacherTab !== 'class') return;
+  remaining--;
+  rfill.style.width = (remaining / INTERVAL * 100) + '%';
+  if (remaining <= 0) location.reload();
+}, 1000);
+
+// ── Lock / Unlock panel ───────────────────────────────────
+let unlocked = true;  // default: open for editing
+
+function doUnlock() {
+  unlocked = true;
+  document.querySelectorAll('.toggle-wrap input').forEach(inp => inp.disabled = false);
+  document.querySelectorAll('.diff-seg-btn').forEach(btn => btn.disabled = false);
+  document.querySelectorAll('.mod-grp-btn').forEach(btn => btn.disabled = false);
+  document.querySelectorAll('.award-btn').forEach(btn => btn.classList.add('visible'));
+  document.querySelectorAll('.del-btn').forEach(btn => btn.classList.add('visible'));
+  document.getElementById('lockStatus').textContent = '🔓 Unlocked';
+  document.getElementById('lockStatus').classList.add('unlocked');
+  document.getElementById('unlockBtn').textContent  = '🔒 Lock';
+  document.getElementById('deleteHint').textContent = 'Click ✕ to remove a student';
+}
+
+function doLock() {
+  unlocked = false;
+  document.querySelectorAll('.toggle-wrap input').forEach(inp => inp.disabled = true);
+  document.querySelectorAll('.diff-seg-btn').forEach(btn => btn.disabled = true);
+  document.querySelectorAll('.mod-grp-btn').forEach(btn => btn.disabled = true);
+  document.querySelectorAll('.award-btn').forEach(btn => btn.classList.remove('visible'));
+  document.querySelectorAll('.del-btn').forEach(btn => btn.classList.remove('visible'));
+  document.getElementById('lockStatus').textContent = '🔒 Locked';
+  document.getElementById('lockStatus').classList.remove('unlocked');
+  document.getElementById('unlockBtn').textContent  = '🔓 Unlock';
+  document.getElementById('deleteHint').textContent = 'Unlock to delete students';
+}
+
+function unlockPanel() {
+  if (unlocked) {
+    // Lock it — require password so students can't tamper
+    const pw = prompt('Enter teacher password to lock:');
+    if (pw === 'math') {
+      sessionStorage.setItem('teacher_locked', 'true');
+      doLock();
+    } else if (pw !== null) {
+      alert('Incorrect password.');
+    }
+  } else {
+    // Unlock it
+    const pw = prompt('Enter teacher password:');
+    if (pw === 'math') {
+      sessionStorage.removeItem('teacher_locked');
+      doUnlock();
+    } else if (pw !== null) {
+      alert('Incorrect password.');
+    }
+  }
+}
+
+// Stay locked across auto-refreshes if the teacher locked it this session
+if (sessionStorage.getItem('teacher_locked') === 'true') {
+  doLock();
+}
+
+// ── Toggle all sub-topics in a unit group ─────────────────
+async function setGroup(parentId, enabled) {
+  if (!unlocked) return;
+  const inputs = document.querySelectorAll(`[data-parent="${parentId}"]`);
+  for (const inp of inputs) {
+    if (inp.checked !== enabled) {
+      inp.checked = enabled;
+      await onToggle(inp);
+    }
+  }
+}
+
+// ── Toggle a module ───────────────────────────────────────
+async function onToggle(input) {
+  if (!unlocked) return;
+  const uid     = input.dataset.unit;
+  const enabled = input.checked;
+  const row     = document.getElementById(`mrow-${uid}`);
+  row.classList.toggle('enabled',  enabled);
+  row.classList.toggle('disabled', !enabled);
+
+  try {
+    await fetch('/teacher/toggle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ unit: uid, enabled })
+    });
+  } catch {
+    // Roll back on error
+    input.checked = !enabled;
+    row.classList.toggle('enabled',  !enabled);
+    row.classList.toggle('disabled',  enabled);
+    alert('Could not save — is the server running?');
+  }
+}
+
+// ── Award XP ──────────────────────────────────────────────
+async function awardXP(name, btn) {
+  if (!unlocked) return;
+  const amountStr = prompt(`Award XP to ${name}:\n(Use a negative number to deduct)`);
+  if (amountStr === null) return;
+  const xp = parseInt(amountStr);
+  if (isNaN(xp) || xp === 0) { alert('Enter a non-zero whole number.'); return; }
+  const reason = prompt('Reason (shown in award log):') ?? 'Teacher award';
+
+  btn.disabled = true;
+  btn.textContent = '…';
+
+  try {
+    const res  = await fetch('/teacher/award_xp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, xp, reason })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      btn.textContent = '✓ Done';
+      setTimeout(() => { btn.textContent = '⭐ Award'; btn.disabled = false; }, 2500);
+      loadHistory(); // refresh the log
+    } else {
+      alert('Error: ' + (data.error || 'unknown'));
+      btn.textContent = '⭐ Award';
+      btn.disabled = false;
+    }
+  } catch {
+    alert('Could not reach server.');
+    btn.textContent = '⭐ Award';
+    btn.disabled = false;
+  }
+}
+
+// ── XP History ────────────────────────────────────────────
+async function loadHistory() {
+  const box = document.getElementById('histContent');
+  try {
+    const rows = await fetch('/api/xp_history?limit=25').then(r => r.json());
+    if (!rows.length) {
+      box.innerHTML = '<div class="hist-empty">No manual awards yet.</div>';
+      return;
+    }
+    box.innerHTML = '<div class="hist-list">' + rows.map(r => {
+      const sign  = r.delta > 0 ? '+' : '';
+      const color = r.delta > 0 ? 'var(--amber)' : 'var(--red)';
+      return `<div class="hist-row">
+        <span class="hist-name">${esc(r.name)}</span>
+        <span class="hist-delta" style="color:${color}">${sign}${parseInt(r.delta,10)||0}</span>
+        <span class="hist-reason">${esc(r.reason)}</span>
+        <span class="hist-ts">${esc(r.ts)}</span>
+      </div>`;
+    }).join('') + '</div>';
+  } catch {
+    box.innerHTML = '<div class="hist-empty">Could not load history.</div>';
+  }
+}
+loadHistory();
+
+// ── Difficulty throttle ───────────────────────────────────
+
+
+
+// ── Delete a student ──────────────────────────────────────
+async function deleteStudent(name, btn) {
+  if (!unlocked) return;
+  if (!confirm(`Remove "${name}" from the roster? Their character and items will be deleted.`)) return;
+
+  btn.textContent = '…';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('/teacher/delete_student', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      // Fade out the row
+      const row = btn.closest('tr');
+      row.style.transition = 'opacity .3s';
+      row.style.opacity = '0';
+      setTimeout(() => row.remove(), 320);
+    } else {
+      btn.textContent = '✕ Remove';
+      btn.disabled = false;
+    }
+  } catch {
+    btn.textContent = '✕ Remove';
+    btn.disabled = false;
+    alert('Could not delete — is the server running?');
+  }
+}
+
+// ── Roster actions ────────────────────────────────────────
+// Delegated so the student name travels as data, never as inline JS source.
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const name = btn.dataset.name;
+  if (btn.dataset.action === 'award')       awardXP(name, btn);
+  else if (btn.dataset.action === 'delete') deleteStudent(name, btn);
+});
+</script>
+
+<script>
+{% include '_explanations.js' %}
+{% include '_generators.js' %}
+
+// ══════════════════════════════════════════════════════════════
+// TEACHER PORTAL SCRIPTS: TABS, LIVE QUIZ ROOM & CUSTOM QUIZZES
+// ══════════════════════════════════════════════════════════════
+let currentTeacherTab = 'room';
+
+function switchTeacherTab(tab){
+  currentTeacherTab = tab;
+  document.getElementById('tabBtnRoom').classList.toggle('active', tab === 'room');
+  document.getElementById('tabBtnQuiz').classList.toggle('active', tab === 'quiz');
+  document.getElementById('tabBtnClass').classList.toggle('active', tab === 'class');
+  
+  document.getElementById('teacherRoomView').style.display = tab === 'room' ? 'block' : 'none';
+  document.getElementById('teacherQuizView').style.display = tab === 'quiz' ? 'block' : 'none';
+  document.getElementById('teacherClassView').style.display = tab === 'class' ? 'block' : 'none';
+  document.getElementById('rbarWrap').style.display = tab === 'class' ? 'block' : 'none';
+  
+  if(tab === 'quiz') loadCustomQuizzes();
+}
+
+// ── CUSTOM QUIZ BUILDER ──────────────────────────────────────
+let customQuizzesData = [];
+
+async function loadCustomQuizzes(){
+  try {
+    const res = await fetch('/api/quizzes');
+    customQuizzesData = await res.json();
+    renderCustomQuizzesList();
+    populateHostQuizDropdown();
+  } catch(e) { console.error(e); }
+}
+
+function renderCustomQuizzesList(){
+  const container = document.getElementById('customQuizzesList');
+  if(!customQuizzesData.length){
+    container.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px 20px;color:var(--muted)">
+      Chưa có bộ đề tự soạn nào. Bấm <b>➕ Soạn Bộ Đề Mới</b> ở trên để tạo đề đầu tiên!
+    </div>`;
+    return;
+  }
+  container.innerHTML = customQuizzesData.map(q => `
+    <div style="background:var(--card2);border-radius:14px;padding:16px;border:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;justify-content:space-between">
+      <div>
+        <div style="font-family:'Fredoka One',cursive;font-size:1.1rem;color:var(--text);margin-bottom:6px">${esc(q.title)}</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-bottom:12px">${esc(q.description || 'Không có mô tả')}</div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
+          <span style="font-size:.72rem;font-weight:800;padding:3px 8px;border-radius:100px;background:rgba(168,85,247,.15);color:#c084fc;border:1px solid rgba(168,85,247,.3)">
+            📝 ${q.question_count} câu hỏi
+          </span>
+          <span style="font-size:.72rem;color:var(--muted)">Bởi: ${esc(q.created_by)}</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-action btn-purple-act" style="flex:1;padding:7px;font-size:.8rem" onclick="editCustomQuiz(${q.id})">✏️ Sửa Đề</button>
+        <button class="btn-action btn-ghost-act" style="color:#f87171;padding:7px 10px;font-size:.8rem" onclick="deleteCustomQuiz(${q.id})">🗑️ Xóa</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function populateHostQuizDropdown(){
+  const sel = document.getElementById('hostCustomQuizSelect');
+  if(!sel) return;
+  if(!customQuizzesData.length){
+    sel.innerHTML = `<option value="">(Chưa có đề nào — hãy soạn đề trước)</option>`;
+    return;
+  }
+  sel.innerHTML = customQuizzesData.map(q => `
+    <option value="${q.id}">${esc(q.title)} (${q.question_count} câu)</option>
+  `).join('');
+}
+
+function onSourceTypeChange(){
+  const st = document.getElementById('hostSourceType').value;
+  document.getElementById('hostCustomQuizWrap').style.display = (st === 'custom') ? 'block' : 'none';
+  if(st === 'custom' && !customQuizzesData.length) loadCustomQuizzes();
+}
+
+function openNewQuizEditor(){
+  document.getElementById('quizListView').style.display = 'none';
+  document.getElementById('quizEditorCard').style.display = 'block';
+  document.getElementById('editorTitle').textContent = 'Soạn Bộ Đề Mới';
+  document.getElementById('editingQuizId').value = '';
+  document.getElementById('editorQuizTitle').value = '';
+  document.getElementById('editorQuizDesc').value = '';
+  document.getElementById('editorQuestionsContainer').innerHTML = '';
+  addQuestionRow();
+}
+
+function closeQuizEditor(){
+  document.getElementById('quizEditorCard').style.display = 'none';
+  document.getElementById('quizListView').style.display = 'block';
+}
+
+function addQuestionRow(qData = {}){
+  const container = document.getElementById('editorQuestionsContainer');
+  const idx = container.children.length;
+  const qDiv = document.createElement('div');
+  qDiv.className = 'editor-q-row';
+  qDiv.style = 'background:var(--card2);border-radius:14px;padding:16px;border:1px solid rgba(255,255,255,.08)';
+  
+  const choices = qData.choices || ['', '', '', ''];
+  const answer = qData.answer || '';
+  
+  qDiv.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <span style="font-family:'Fredoka One',cursive;font-size:.95rem;color:var(--amber)">Câu hỏi ${idx + 1}</span>
+      <button class="btn-action btn-ghost-act" style="color:#f87171;font-size:.74rem;padding:4px 8px" onclick="this.closest('.editor-q-row').remove();renumberQRows()">✕ Xóa câu</button>
+    </div>
+    <div style="margin-bottom:12px">
+      <label class="field-label">Nội dung câu hỏi</label>
+      <textarea class="text-input q-input-text" rows="2" placeholder="Nhập đề bài câu hỏi…">${esc(qData.question || '')}</textarea>
+    </div>
+    <div style="margin-bottom:12px">
+      <label class="field-label">4 Phương án lựa chọn (Tích chọn phương án ĐÚNG):</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        ${[0,1,2,3].map(i => `
+          <div style="display:flex;align-items:center;gap:8px;background:var(--card3);padding:6px 10px;border-radius:8px">
+            <input type="radio" name="correct_${idx}" value="${i}" ${answer && choices[i] === answer ? 'checked' : (i===0 && !answer ? 'checked' : '')}>
+            <input type="text" class="text-input q-choice-${i}" value="${esc(choices[i] || '')}" placeholder="Phương án ${String.fromCharCode(65+i)}" style="margin-bottom:0;padding:6px 10px;font-size:.85rem">
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    <div>
+      <label class="field-label">Giải thích chi tiết từng bước (Hiển thị khi học sinh làm sai):</label>
+      <textarea class="text-input q-why-text" rows="2" placeholder="Ví dụ: Đáp án đúng là A. Vì theo công thức…">${esc(qData.why || '')}</textarea>
+    </div>
+  `;
+  container.appendChild(qDiv);
+}
+
+function renumberQRows(){
+  document.querySelectorAll('.editor-q-row').forEach((row, idx) => {
+    row.querySelector("span[style*='color:var(--amber)']").textContent = `Câu hỏi ${idx + 1}`;
+    row.querySelectorAll("input[type='radio']").forEach(r => r.name = `correct_${idx}`);
+  });
+}
+
+async function editCustomQuiz(quizId){
+  try {
+    const res = await fetch(`/api/quizzes/${quizId}`);
+    const d = await res.json();
+    if(!d.ok) return alert(d.error);
+    const qz = d.quiz;
+    document.getElementById('quizListView').style.display = 'none';
+    document.getElementById('quizEditorCard').style.display = 'block';
+    document.getElementById('editorTitle').textContent = 'Chỉnh Sửa Bộ Đề';
+    document.getElementById('editingQuizId').value = qz.id;
+    document.getElementById('editorQuizTitle').value = qz.title;
+    document.getElementById('editorQuizDesc').value = qz.description || '';
+    
+    const container = document.getElementById('editorQuestionsContainer');
+    container.innerHTML = '';
+    if(qz.questions && qz.questions.length){
+      qz.questions.forEach(q => addQuestionRow(q));
+    } else {
+      addQuestionRow();
+    }
+  } catch(e) { console.error(e); }
+}
+
+async function deleteCustomQuiz(quizId){
+  if(!confirm('Bạn có chắc chắn muốn xóa bộ đề này?')) return;
+  try {
+    const res = await fetch(`/api/quizzes/${quizId}`, {method: 'DELETE'});
+    const d = await res.json();
+    if(d.ok) loadCustomQuizzes();
+  } catch(e) { console.error(e); }
+}
+
+async function saveCustomQuiz(){
+  const title = document.getElementById('editorQuizTitle').value.trim();
+  const desc = document.getElementById('editorQuizDesc').value.trim();
+  const idVal = document.getElementById('editingQuizId').value;
+  if(!title) return alert('Vui lòng nhập tiêu đề bộ đề!');
+  
+  const qRows = document.querySelectorAll('.editor-q-row');
+  if(!qRows.length) return alert('Vui lòng thêm ít nhất 1 câu hỏi!');
+  
+  const questions = [];
+  for(let i = 0; i < qRows.length; i++){
+    const row = qRows[i];
+    const qText = row.querySelector('.q-input-text').value.trim();
+    if(!qText) return alert(`Câu hỏi ${i+1} chưa có nội dung!`);
+    const choices = [
+      row.querySelector('.q-choice-0').value.trim(),
+      row.querySelector('.q-choice-1').value.trim(),
+      row.querySelector('.q-choice-2').value.trim(),
+      row.querySelector('.q-choice-3').value.trim(),
+    ];
+    if(choices.some(c => !c)) return alert(`Câu hỏi ${i+1} chưa điền đủ 4 phương án!`);
+    const checkedRadio = row.querySelector("input[type='radio']:checked");
+    const correctIdx = checkedRadio ? parseInt(checkedRadio.value) : 0;
+    const answer = choices[correctIdx];
+    const why = row.querySelector('.q-why-text').value.trim();
+    questions.push({ question: qText, choices, answer, why });
+  }
+  
+  try {
+    const res = await fetch('/api/quizzes/save', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        id: idVal ? parseInt(idVal) : null,
+        title,
+        description: desc,
+        questions
+      })
+    });
+    const d = await res.json();
+    if(d.ok){
+      alert('Đã lưu bộ đề thành công!');
+      closeQuizEditor();
+      loadCustomQuizzes();
+    } else {
+      alert(d.error || 'Lỗi khi lưu bộ đề');
+    }
+  } catch(e) { console.error(e); alert('Lỗi kết nối máy chủ'); }
+}
+
+// ── LIVE QUIZ ROOM HOST ──────────────────────────────────────
+let currentHostCode = null;
+let hostLobbyInterval = null;
+let hostMatchInterval = null;
+
+async function hostCreateRoom(){
+  const title = document.getElementById('hostTitle').value.trim() || 'Đấu Trường Lớp Học';
+  const sourceType = document.getElementById('hostSourceType').value;
+  const numQ = parseInt(document.getElementById('hostNumQ').value) || 10;
+  const timePerQ = parseInt(document.getElementById('hostTimePerQ').value) || 30;
+  
+  let questions = [];
+  if(sourceType === 'custom'){
+    const qzId = document.getElementById('hostCustomQuizSelect').value;
+    if(!qzId) return alert('Vui lòng chọn một bộ đề đã soạn!');
+    const res = await fetch(`/api/quizzes/${qzId}`);
+    const d = await res.json();
+    if(!d.ok || !d.quiz.questions.length) return alert('Bộ đề này không có câu hỏi nào!');
+    questions = d.quiz.questions.map(q => ({
+      question: q.question,
+      choices: q.choices,
+      answer: q.answer,
+      why: q.why
+    }));
+  } else {
+    // Generate questions using client-side generators
+    const diffs = ['easy', 'medium', 'hard'];
+    for(let i = 0; i < numQ; i++){
+      const diff = diffs[i % diffs.length];
+      let genUnit = sourceType;
+      if(sourceType === 'c1-c8'){
+        const allUnits = ['c1','c2','c3','c4','c5','c6','c7'];
+        genUnit = allUnits[i % allUnits.length];
+      }
+      try {
+        const rawQ = genQ(genUnit, diff);
+        questions.push({
+          question: rawQ.vi,
+          choices: rawQ.choices,
+          answer: rawQ.answer,
+          why: rawQ.why_vi || rawQ.why
+        });
+      } catch(err) {
+        console.warn('GenQ fallback', err);
+      }
+    }
+  }
+  
+  try {
+    const res = await fetch('/api/room/create', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        title,
+        config: { time_per_q: timePerQ },
+        questions
+      })
+    });
+    const d = await res.json();
+    if(!d.ok) return alert(d.error || 'Không thể tạo phòng');
+    
+    currentHostCode = d.code;
+    document.getElementById('hostCreateCard').style.display = 'none';
+    document.getElementById('hostLobbyCard').style.display = 'block';
+    document.getElementById('hostLobbyTitle').textContent = d.title;
+    document.getElementById('hostRoomCodeDisplay').textContent = d.code;
+    
+    if(hostLobbyInterval) clearInterval(hostLobbyInterval);
+    hostLobbyInterval = setInterval(pollHostLobby, 1200);
+    pollHostLobby();
+  } catch(e) {
+    console.error(e);
+    alert('Lỗi kết nối máy chủ');
+  }
+}
+
+function copyRoomCode(){
+  if(currentHostCode) {
+    navigator.clipboard?.writeText(currentHostCode);
+    alert('Đã sao chép mã phòng: ' + currentHostCode);
+  }
+}
+
+function copyRoomLink(){
+  const link = window.location.origin + '/';
+  navigator.clipboard?.writeText(link);
+  alert('Đã sao chép link tham gia: ' + link);
+}
+
+function cancelRoom(){
+  if(hostLobbyInterval) clearInterval(hostLobbyInterval);
+  currentHostCode = null;
+  document.getElementById('hostLobbyCard').style.display = 'none';
+  document.getElementById('hostCreateCard').style.display = 'block';
+}
+
+async function pollHostLobby(){
+  if(!currentHostCode) return;
+  try {
+    const res = await fetch(`/api/room/lobby/${currentHostCode}`);
+    const d = await res.json();
+    if(!d.ok) return;
+    document.getElementById('hostPlayerCount').textContent = d.player_count;
+    const list = document.getElementById('hostPlayersList');
+    if(!d.players.length){
+      list.innerHTML = `<span style="color:var(--muted);font-size:.85rem;font-weight:700">Chưa có học sinh nào vào phòng…</span>`;
+    } else {
+      list.innerHTML = d.players.map(p => `<span class="room-player-tag">🧑 ${esc(p.name)}</span>`).join('');
+    }
+  } catch(e) { console.error(e); }
+}
+
+async function hostStartMatch(){
+  if(!currentHostCode) return;
+  if(hostLobbyInterval) clearInterval(hostLobbyInterval);
+  try {
+    const res = await fetch('/api/room/start', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({code: currentHostCode})
+    });
+    const d = await res.json();
+    if(!d.ok) return alert(d.error);
+    
+    document.getElementById('hostLobbyCard').style.display = 'none';
+    document.getElementById('hostMatchCard').style.display = 'block';
+    
+    if(hostMatchInterval) clearInterval(hostMatchInterval);
+    hostMatchInterval = setInterval(pollHostMatch, 1200);
+    pollHostMatch();
+  } catch(e) { console.error(e); }
+}
+
+async function pollHostMatch(){
+  if(!currentHostCode) return;
+  try {
+    const res = await fetch(`/api/room/state/${currentHostCode}`);
+    const d = await res.json();
+    if(!d.ok) return;
+    
+    if(d.status === 'finished'){
+      clearInterval(hostMatchInterval);
+      showHostPodium(d);
+      return;
+    }
+    
+    document.getElementById('hostMatchQNum').textContent = `Câu ${d.current_q + 1} / ${d.total_questions}`;
+    document.getElementById('hostMatchTitle').textContent = d.title;
+    document.getElementById('hostAnsweredBadge').textContent = `Đã nộp: ${d.answered_count} / ${d.player_count}`;
+    document.getElementById('hostTimeBadge').textContent = `Còn ${d.time_left}s`;
+    
+    const q = d.question;
+    if(q){
+      document.getElementById('hostQuestionText').textContent = q.question;
+      const grid = document.getElementById('hostChoicesGrid');
+      grid.innerHTML = q.choices.map((ch, idx) => {
+        const isCorrect = d.show_result && (ch === q.answer);
+        return `<div class="choice-host-card ${isCorrect ? 'correct' : ''}">
+          <span style="font-family:'Fredoka One',cursive;font-size:1rem;opacity:.7">${String.fromCharCode(65+idx)}.</span>
+          <span>${esc(ch)}</span>
+          ${isCorrect ? '<span style="margin-left:auto">✅ Đáp án</span>' : ''}
+        </div>`;
+      }).join('');
+      
+      const whyBox = document.getElementById('hostWhyBox');
+      if(d.show_result && q.why){
+        document.getElementById('hostWhyText').textContent = q.why;
+        whyBox.style.display = 'block';
+      } else {
+        whyBox.style.display = 'none';
+      }
+    }
+    
+    // Live Leaderboard
+    const lbList = document.getElementById('hostLeaderboardList');
+    lbList.innerHTML = d.leaderboard.slice(0, 10).map((p, idx) => `
+      <div class="room-leader-row">
+        <span>${idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '#' + (idx+1)} ${esc(p.name)}</span>
+        <span style="color:var(--amber)">${p.score.toLocaleString()} điểm</span>
+      </div>
+    `).join('');
+  } catch(e) { console.error(e); }
+}
+
+async function hostShowResult(){
+  if(!currentHostCode) return;
+  await fetch('/api/room/show_result', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({code: currentHostCode})
+  });
+  pollHostMatch();
+}
+
+async function hostNextQuestion(){
+  if(!currentHostCode) return;
+  const res = await fetch('/api/room/next_q', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({code: currentHostCode})
+  });
+  const d = await res.json();
+  if(d.finished){
+    clearInterval(hostMatchInterval);
+    pollHostMatch();
+  } else {
+    pollHostMatch();
+  }
+}
+
+async function hostEndMatchEarly(){
+  if(!confirm('Bạn có chắc chắn muốn kết thúc trận đấu ngay bây giờ?')) return;
+  if(!currentHostCode) return;
+  await fetch('/api/room/end', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({code: currentHostCode})
+  });
+  pollHostMatch();
+}
+
+function showHostPodium(d){
+  document.getElementById('hostMatchCard').style.display = 'none';
+  document.getElementById('hostPodiumCard').style.display = 'block';
+  
+  const top3 = d.leaderboard.slice(0, 3);
+  const pWrap = document.getElementById('hostPodiumWrap');
+  
+  const ranks = [
+    { rank: 2, badge: '🥈 HẠNG 2', color: '#94a3b8', height: '140px', player: top3[1] },
+    { rank: 1, badge: '🥇 QUÁN QUÂN', color: '#fbbf24', height: '180px', player: top3[0] },
+    { rank: 3, badge: '🥉 HẠNG 3', color: '#f97316', height: '110px', player: top3[2] }
+  ];
+  
+  pWrap.innerHTML = ranks.map(r => {
+    if(!r.player) return '';
+    return `
+      <div style="flex:1;max-width:180px;text-align:center">
+        <div style="font-size:1.8rem;margin-bottom:4px">${r.rank === 1 ? '👑' : '⭐'}</div>
+        <div style="font-family:'Fredoka One',cursive;font-size:1.1rem;color:var(--text);margin-bottom:2px">${esc(r.player.name)}</div>
+        <div style="font-size:.8rem;color:var(--amber);font-weight:800;margin-bottom:8px">${r.player.score.toLocaleString()} đ</div>
+        <div style="height:${r.height};background:var(--card2);border-radius:14px 14px 0 0;border:2px solid ${r.color};display:flex;flex-direction:column;align-items:center;justify-content:center">
+          <div style="font-family:'Fredoka One',cursive;font-size:1.1rem;color:${r.color}">${r.badge}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function resetToCreateRoom(){
+  currentHostCode = null;
+  document.getElementById('hostPodiumCard').style.display = 'none';
+  document.getElementById('hostCreateCard').style.display = 'block';
+}
+
+</script>
+</body>
+</html>

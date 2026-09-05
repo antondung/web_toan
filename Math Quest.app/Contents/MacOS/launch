@@ -1,0 +1,75 @@
+#!/bin/bash
+# Math Quest — self-contained launcher.
+# Works on any Mac regardless of username or Python location.
+
+PORT=5001
+
+# ── Find the bundled app code (inside this .app) ─────────────
+BUNDLE="$(cd "$(dirname "$0")/../.."; pwd)"
+APP_DIR="$BUNDLE/Contents/Resources/app"
+
+# ── Already running? Just open the page ──────────────────────
+if lsof -ti tcp:$PORT >/dev/null 2>&1; then
+    open "http://localhost:$PORT/teacher"
+    exit 0
+fi
+
+# ── Not running — show immediate feedback ────────────────────
+osascript -e 'display notification "Starting up… browser will open in a few seconds." with title "Math Quest 🎮"' 2>/dev/null
+
+# ── Find Python 3 ─────────────────────────────────────────────
+PYTHON=""
+for candidate in \
+    "/usr/bin/python3" \
+    "/usr/local/bin/python3" \
+    "/opt/homebrew/bin/python3" \
+    "/Library/Frameworks/Python.framework/Versions/3.13/bin/python3" \
+    "/Library/Frameworks/Python.framework/Versions/3.12/bin/python3" \
+    "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3" \
+    "/Library/Frameworks/Python.framework/Versions/Current/bin/python3"
+do
+    if [ -x "$candidate" ]; then
+        PYTHON="$candidate"
+        break
+    fi
+done
+
+if [ -z "$PYTHON" ]; then
+    osascript -e 'display alert "Math Quest — Setup Needed" message "Python 3 is not installed.\n\nPlease download and install it from python.org, then open Math Quest again." as critical buttons {"Open python.org", "Cancel"} default button "Open python.org"' 2>/dev/null
+    open "https://www.python.org/downloads/"
+    exit 1
+fi
+
+# ── Install dependencies on first run (silent) ────────────────
+if ! "$PYTHON" -c "import flask, qrcode" 2>/dev/null; then
+    osascript -e 'display notification "One-time setup — installing packages, ~30 seconds…" with title "Math Quest 🎮"' 2>/dev/null
+    "$PYTHON" -m pip install --user --quiet flask "qrcode[pil]" 2>/dev/null
+    if ! "$PYTHON" -c "import flask, qrcode" 2>/dev/null; then
+        osascript -e 'display alert "Math Quest — Setup Failed" message "Could not install required packages.\n\nTry opening Terminal and running:\n  pip3 install flask qrcode[pil]" as critical' 2>/dev/null
+        exit 1
+    fi
+fi
+
+# ── Start the server ──────────────────────────────────────────
+LOG="$HOME/Library/Logs/MathQuest.log"
+mkdir -p "$HOME/Library/Logs"
+cd "$APP_DIR"
+nohup "$PYTHON" app.py >"$LOG" 2>&1 &
+SERVER_PID=$!
+
+# ── Wait for it to be ready (TCP check — faster than curl) ────
+for i in $(seq 1 24); do
+    sleep 0.5
+    # Use bash's built-in TCP check — no curl overhead
+    if (echo >/dev/tcp/localhost/$PORT) 2>/dev/null; then
+        open "http://localhost:$PORT/teacher"
+        exit 0
+    fi
+    if ! kill -0 $SERVER_PID 2>/dev/null; then
+        osascript -e "display alert \"Math Quest — Error\" message \"The server failed to start.\n\nDetails are in:\n$LOG\" as critical" 2>/dev/null
+        exit 1
+    fi
+done
+
+# Timed out but server may still be initialising — open anyway
+open "http://localhost:$PORT/teacher"

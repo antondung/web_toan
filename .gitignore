@@ -1,0 +1,29 @@
+# Student data — keep locally, don't share on GitHub
+scores.db
+scores.db-shm
+scores.db-wal
+math_quest.db*
+*.db
+*.db-shm
+*.db-wal
+scratch/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+venv/
+.venv/
+
+# Mac
+.DS_Store
+.AppleDouble
+
+# Claude Code
+.claude/
+
+# Editor
+.vscode/
+.idea/
+*.swp

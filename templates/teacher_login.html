@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Math Quest — Teacher Login</title>
+  <link rel="icon" href="/favicon.ico" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{ --bg:#0f1226; --card:#1a1f3a; --line:#2a3154; --text:#e8ecff;
+           --muted:#8b93b8; --accent:#a855f7; --red:#f87171; }
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+         background:radial-gradient(1200px 600px at 50% -10%,#241a4d,var(--bg));
+         font-family:'Nunito',system-ui,sans-serif;color:var(--text);padding:20px}
+    .card{width:100%;max-width:380px;background:var(--card);border:1px solid var(--line);
+          border-radius:20px;padding:32px 28px;box-shadow:0 20px 60px rgba(0,0,0,.45);text-align:center}
+    .logo{font-family:'Fredoka One',cursive;font-size:1.9rem;margin:0 0 4px;
+          background:linear-gradient(135deg,#a855f7,#38bdf8);-webkit-background-clip:text;
+          background-clip:text;-webkit-text-fill-color:transparent}
+    .sub{color:var(--muted);font-size:.9rem;margin-bottom:24px}
+    label{display:block;text-align:left;font-weight:700;font-size:.85rem;margin-bottom:6px}
+    input{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--line);
+          background:#141834;color:var(--text);font-size:1rem;font-family:inherit}
+    input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(168,85,247,.25)}
+    button{width:100%;margin-top:16px;padding:13px;border:0;border-radius:12px;cursor:pointer;
+           font-family:'Fredoka One',cursive;font-size:1rem;color:#fff;
+           background:linear-gradient(135deg,#a855f7,#7c3aed);box-shadow:0 4px 16px rgba(168,85,247,.35)}
+    button:hover{filter:brightness(1.12)}
+    .err{background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.4);color:var(--red);
+         border-radius:10px;padding:10px;font-size:.85rem;font-weight:700;margin-bottom:16px}
+    .foot{margin-top:20px;font-size:.78rem;color:var(--muted)}
+    .foot a{color:var(--muted)}
+  </style>
+</head>
+<body>
+  <form class="card" method="POST" action="/teacher/login">
+    <h1 class="logo">Math Quest</h1>
+    <div class="sub">Teacher Dashboard</div>
+    {% if error %}<div class="err">Incorrect password — try again.</div>{% endif %}
+    <input type="hidden" name="next" value="{{ next }}">
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" autofocus autocomplete="current-password">
+    <button type="submit">Sign in</button>
+    <div class="foot">Students: <a href="/">go to Math Quest</a></div>
+  </form>
+</body>
+</html>

@@ -1,0 +1,2475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚔️ Math Quest</title>
+  <link rel="icon" href="/favicon.ico" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+{% include '_styles.css' %}
+  </style>
+</head>
+<body>
+<div id="confetti"></div>
+
+<!-- Language toggle pill — fixed, always visible -->
+<button id="langPill" onclick="toggleLang()"
+  style="position:fixed;bottom:16px;right:14px;z-index:9999;font-family:'Nunito',sans-serif;
+         font-weight:800;font-size:.7rem;padding:5px 11px;border-radius:100px;
+         background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);
+         color:var(--muted);cursor:pointer;transition:background .15s,color .15s;letter-spacing:.06em">
+  🌐 EN
+</button>
+
+<!-- ══ 1: START ══════════════════════════════════════════════ -->
+<!-- Top user & role header bar -->
+<div id="userHeaderBar" style="display:none;width:100%;max-width:480px;margin:12px auto 6px;padding:8px 14px;background:var(--card);border:1px solid rgba(255,255,255,.12);border-radius:14px;align-items:center;justify-content:space-between;box-sizing:border-box">
+  <div style="display:flex;align-items:center;gap:8px">
+    <span id="userHeaderAvatar" style="font-size:1.3rem">🧑</span>
+    <span id="userHeaderName" style="font-weight:800;font-size:.92rem;color:var(--text)">...</span>
+    <span id="userHeaderRole" style="font-size:.68rem;font-weight:800;padding:3px 9px;border-radius:100px;background:rgba(168,85,247,.2);color:#c084fc;border:1px solid rgba(168,85,247,.4)">Học Sinh</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <button id="userHeaderTeacherBtn" class="btn" style="display:none;padding:5px 11px;font-size:.74rem;background:var(--accent);color:#fff" onclick="location.href='/teacher'">⚙️ Quản Trị</button>
+    <button class="btn" style="padding:5px 11px;font-size:.74rem;background:rgba(255,255,255,.08);color:var(--muted);border:1px solid rgba(255,255,255,.15)" onclick="doLogout()">Đăng xuất</button>
+  </div>
+</div>
+
+<!-- ══ 1: START & UNIFIED AUTH ═════════════════════════════════ -->
+<div class="screen active" id="startScreen">
+  <div class="logo">Math Quest</div>
+  <p class="tagline" data-i18n="tagline">⚔️ Your adventure awaits ⚔️</p>
+  <div class="logo">Đấu Trường Toán 6</div>
+  <p class="tagline">⚔️ Khám phá tri thức & Đấu trường trực tiếp ⚔️</p>
+
+  <!-- ── Returning adventurer card (shown when localStorage has a name) ── -->
+  <div id="savedAdventurerBox" style="display:none;width:100%;max-width:340px;margin-bottom:12px">
+    <div style="background:var(--card);border:2px solid rgba(168,85,247,.5);border-radius:var(--radius);padding:20px;text-align:center">
+      <div style="font-size:.65rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin-bottom:8px"
+           data-i18n="welcome_back_short">Welcome back!</div>
+      <div id="savedNameDisplay" style="font-family:'Fredoka One',cursive;font-size:1.7rem;color:var(--accent);margin-bottom:16px"></div>
+      <button class="btn btn-amber" style="width:100%;margin-bottom:10px" onclick="continueQuest()" data-i18n="continue_btn">Continue! →</button>
+      <button onclick="showNewAdventurer()"
+        style="background:none;border:none;color:var(--muted);font-size:.74rem;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;text-decoration:underline;-webkit-tap-highlight-color:transparent"
+        data-i18n="not_me_switch">Not me — switch adventurer</button>
+  <!-- Unified Auth Box -->
+  <div class="auth-card" id="unifiedAuthBox" style="width:100%;max-width:380px;background:var(--card);border:1px solid rgba(255,255,255,.12);border-radius:var(--radius-lg);padding:24px;box-shadow:0 8px 32px rgba(0,0,0,.4)">
+    <!-- Tabs: Đăng Nhập / Đăng Ký -->
+    <div style="display:flex;background:var(--card2);border-radius:12px;padding:4px;margin-bottom:18px;gap:4px">
+      <button id="tabAuthLogin" class="btn" style="flex:1;padding:8px;font-size:.85rem;font-weight:800;border-radius:9px;background:var(--amber);color:#1c1917" onclick="switchAuthTab('login')">Đăng Nhập</button>
+      <button id="tabAuthRegister" class="btn" style="flex:1;padding:8px;font-size:.85rem;font-weight:800;border-radius:9px;background:transparent;color:var(--muted)" onclick="switchAuthTab('register')">Đăng Ký</button>
+    </div>
+  </div>
+
+  <!-- ── New adventurer wizard (hidden for returning students) ── -->
+  <div id="newAdventurerForm" class="name-form">
+    <!-- Error notice -->
+    <div id="authErrMsg" style="display:none;background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.4);color:#f87171;padding:8px 12px;border-radius:9px;font-size:.78rem;font-weight:700;margin-bottom:14px;text-align:center"></div>
+
+    <!-- Step 1: pick or type name -->
+    <div id="authStep1">
+      <div id="pickerWrap" style="display:none">
+        <input type="text" id="pickerSearch" class="picker-search" placeholder="🔍 Search by name…" oninput="filterPicker(this.value)" autocomplete="off">
+        <div id="playerPicker" class="picker-list"></div>
+      </div>
+      <div class="auth-or" id="authOrLabel" style="display:none">— or type your name —</div>
+      <label for="playerName" data-i18n="name_label">Adventurer name:</label>
+      <input type="text" id="playerName" data-i18n-ph="name_ph" placeholder="Enter your name…" maxlength="20" autocomplete="off" autocapitalize="words">
+      <button class="btn btn-amber" onclick="submitName()">Next →</button>
+    <!-- Form Đăng Nhập -->
+    <div id="formLogin">
+      <label style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">Tên Đăng Nhập</label>
+      <input type="text" id="loginUsername" class="auth-field" placeholder="Nhập tên đăng nhập…" autocomplete="username" style="width:100%;padding:11px 14px;border-radius:10px;background:var(--card2);border:1px solid rgba(255,255,255,.15);color:var(--text);font-family:'Nunito',sans-serif;font-size:.95rem;font-weight:700;margin-bottom:14px;box-sizing:border-box">
+      
+      <label style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">Mật Khẩu</label>
+      <input type="password" id="loginPassword" class="auth-field" placeholder="Nhập mật khẩu…" autocomplete="current-password" style="width:100%;padding:11px 14px;border-radius:10px;background:var(--card2);border:1px solid rgba(255,255,255,.15);color:var(--text);font-family:'Nunito',sans-serif;font-size:.95rem;font-weight:700;margin-bottom:18px;box-sizing:border-box">
+
+      <button class="btn btn-amber" style="width:100%;padding:12px" onclick="doLogin()">Vào Đấu Trường →</button>
+    </div>
+
+    <!-- Step 2: PIN entry or creation -->
+    <div id="authStep2" style="display:none">
+      <div class="auth-who" id="authWho"></div>
+      <div class="auth-pin-lbl" id="authPinLbl">Enter your 4-digit PIN:</div>
+      <input type="tel" id="pinInput" class="pin-input" maxlength="4" pattern="\d*" placeholder="••••" autocomplete="off">
+      <div id="authConfirmWrap" style="display:none">
+        <div class="auth-pin-lbl" style="margin-top:14px">Confirm your PIN:</div>
+        <input type="tel" id="pinConfirm" class="pin-input" maxlength="4" pattern="\d*" placeholder="••••" autocomplete="off">
+    <!-- Form Đăng Ký -->
+    <div id="formRegister" style="display:none">
+      <label style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">Tên Đăng Nhập Mới</label>
+      <input type="text" id="regUsername" class="auth-field" placeholder="Chọn tên (ví dụ: namtoan6)…" autocomplete="off" style="width:100%;padding:11px 14px;border-radius:10px;background:var(--card2);border:1px solid rgba(255,255,255,.15);color:var(--text);font-family:'Nunito',sans-serif;font-size:.95rem;font-weight:700;margin-bottom:12px;box-sizing:border-box">
+
+      <label style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">Mật Khẩu</label>
+      <input type="password" id="regPassword" class="auth-field" placeholder="Tối thiểu 4 ký tự…" autocomplete="new-password" style="width:100%;padding:11px 14px;border-radius:10px;background:var(--card2);border:1px solid rgba(255,255,255,.15);color:var(--text);font-family:'Nunito',sans-serif;font-size:.95rem;font-weight:700;margin-bottom:12px;box-sizing:border-box">
+
+      <label style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">Bạn Là (Chọn Vai Trò):</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
+        <label id="roleLblStudent" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 8px;border-radius:10px;border:2px solid var(--accent);background:rgba(168,85,247,.15);cursor:pointer;font-weight:800;font-size:.82rem;text-align:center">
+          <input type="radio" name="userRole" value="student" checked onchange="updateRoleUI()" style="display:none">
+          <span style="font-size:1.4rem;margin-bottom:4px">🎓</span>
+          <span>Học Sinh</span>
+        </label>
+        <label id="roleLblTeacher" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 8px;border-radius:10px;border:2px solid rgba(255,255,255,.12);background:transparent;cursor:pointer;font-weight:800;font-size:.82rem;text-align:center">
+          <input type="radio" name="userRole" value="teacher" onchange="updateRoleUI()" style="display:none">
+          <span style="font-size:1.4rem;margin-bottom:4px">👨‍🏫</span>
+          <span>Giáo Viên</span>
+        </label>
+      </div>
+      <div id="authError" class="auth-error" style="display:none"></div>
+      <button class="btn btn-amber" id="authSubmitBtn" onclick="submitPin()">Continue →</button>
+      <button class="auth-link-btn" onclick="backToNamePicker()">← Choose a different name</button>
+
+      <button class="btn btn-purple" style="width:100%;padding:12px" onclick="doRegister()">Tạo Tài Khoản & Bắt Đầu →</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ 2: CHARACTER ══════════════════════════════════════════ -->
+<div class="screen" id="characterScreen">
+  <div class="char-hero" id="charHeroEmoji">🧑</div>
+  <div id="welcomeMsg" style="font-size:.82rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;text-align:center"></div>
+  <div class="char-title" id="charTitle">Math Squire</div>
+  <div class="char-level" id="charLevelLabel">Level 1</div>
+  <div class="char-xp-block">
+    <div class="xp-label"><span id="charXpCurrent">0</span> / <span id="charXpNext">300</span> XP to next level</div>
+    <div class="xp-track"><div class="xp-fill" id="charXpBar" style="width:0%"></div></div>
+  </div>
+  <div id="charPowerupBadge" class="powerup-badge" style="display:none" onclick="showScreen('inventoryScreen');renderInventory()">
+    <span id="charPowerupText"></span>
+    <span id="charTapChange" style="font-size:.7rem;color:var(--muted);font-weight:700" data-i18n="tap_to_change">· tap to change</span>
+  </div>
+  <div class="char-items-preview" id="charItemsPreview"></div>
+  <div class="char-btns">
+    <button class="btn btn-amber" style="width:100%" onclick="goToTopics()" data-i18n="btn_play">Play! →</button>
+  </div>
+  <button id="notYouBtn" onclick="notYou()" data-i18n="not_you"
+    style="display:none;margin-top:14px;background:none;border:none;color:var(--muted);font-size:.76rem;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;text-decoration:underline">
+    Not you? Switch adventurer
+  </button>
+</div>
+
+<!-- ══ 3: TOPIC SELECT ═══════════════════════════════════════ -->
+<div class="screen" id="shopScreen">
+  <div class="screen-title" data-i18n="shop_title">Skin Shop</div>
+  <p class="screen-sub" id="shopSub"></p>
+  <div id="shopBody"></div>
+</div>
+
+<div class="screen" id="topicScreen">
+  <div class="screen-title" data-i18n="topic_title">Choose Your Quest</div>
+  <p class="screen-sub" id="topicSub">What will you master today?</p>
+  
+  <!-- Banner vào phòng thi đấu của lớp -->
+  <div id="roomJoinBanner" class="room-join-banner" onclick="openRoomJoinModal()" style="margin-bottom:18px;padding:16px 20px;border-radius:var(--radius);background:linear-gradient(135deg,rgba(168,85,247,.22),rgba(245,158,11,.15));border:1.5px solid var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:transform .15s,box-shadow .15s">
+    <div style="display:flex;align-items:center;gap:14px">
+      <span style="font-size:2.2rem">🎯</span>
+      <div>
+        <div style="font-family:'Fredoka One',cursive;font-size:1.15rem;color:var(--text)">Vào Phòng Thi Đấu Của Lớp</div>
+        <div style="font-size:.78rem;color:var(--muted);font-weight:700">Nhập mã Code 6 số của giáo viên để thi đấu trực tiếp cùng bạn bè</div>
+      </div>
+    </div>
+    <button class="btn btn-amber btn-sm" style="pointer-events:none;padding:9px 15px;font-size:.82rem">Nhập Mã →</button>
+  </div>
+
+  <div class="topics-grid" id="topicsGrid">
+    <!-- Dynamically filled from /api/settings -->
+    <div style="grid-column:1/-1;text-align:center;color:var(--muted);font-weight:700;padding:40px" data-i18n="topic_loading">
+      Loading modules…
+    </div>
+  </div>
+</div>
+
+<!-- Modal nhập mã phòng -->
+<div id="roomJoinModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:10000;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--card);border:1px solid rgba(255,255,255,.15);border-radius:var(--radius-lg);max-width:360px;width:100%;padding:24px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.6)">
+    <div style="font-size:2.4rem;margin-bottom:8px">🎯</div>
+    <div style="font-family:'Fredoka One',cursive;font-size:1.3rem;margin-bottom:6px">Tham Gia Phòng Thi</div>
+    <p style="font-size:.78rem;color:var(--muted);font-weight:700;margin-bottom:16px">Nhập mã code 6 chữ số giáo viên cung cấp</p>
+    <input type="tel" id="roomCodeInput" maxlength="6" placeholder="Ví dụ: 849201" style="width:100%;text-align:center;font-family:'Fredoka One',cursive;font-size:1.8rem;letter-spacing:.2em;padding:12px;border-radius:12px;background:var(--card2);border:2px solid var(--accent);color:var(--text);margin-bottom:14px;box-sizing:border-box">
+    <div id="roomJoinErr" style="display:none;color:#f87171;font-size:.78rem;font-weight:700;margin-bottom:12px"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn" style="flex:1;background:var(--card2);color:var(--muted)" onclick="closeRoomJoinModal()">Hủy</button>
+      <button class="btn btn-amber" style="flex:1" onclick="submitRoomJoin()">Vào Phòng →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ROOM PLAY SCREEN ══════════════════════════════════════ -->
+<div class="screen" id="roomPlayScreen">
+  <!-- Sảnh chờ (Lobby State) -->
+  <div id="roomLobbyView" style="display:none;text-align:center;width:100%;max-width:440px">
+    <div style="font-size:2.8rem;margin-bottom:8px">⚔️</div>
+    <div class="screen-title" id="roomLobbyTitle">Phòng Thi Đấu</div>
+    <div style="display:inline-block;padding:6px 16px;border-radius:100px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);color:var(--amber);font-family:'Fredoka One',cursive;font-size:1.1rem;margin-bottom:16px">
+      Mã Phòng: <span id="roomLobbyCode">...</span>
+    </div>
+    <p style="font-size:.82rem;font-weight:800;color:#4ade80;margin-bottom:14px">⏳ Đang đợi giáo viên bắt đầu trận đấu...</p>
+    
+    <div style="background:var(--card);border-radius:var(--radius);padding:16px;border:1px solid rgba(255,255,255,.08);margin-bottom:18px">
+      <div style="font-size:.72rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">
+        Bạn cùng phòng (<span id="roomPlayerCount">0</span>)
+      </div>
+      <div id="roomPlayersList" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-height:160px;overflow-y:auto"></div>
+    </div>
+    <button class="btn" style="background:rgba(255,255,255,.08);color:var(--muted);font-size:.8rem" onclick="leaveRoom()">← Rời Phòng</button>
+  </div>
+
+  <!-- Làm bài trực tiếp (Active Question State) -->
+  <div id="roomActiveView" style="display:none;width:100%;max-width:480px">
+    <div class="game-header">
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="pill">⭐ <span id="roomScoreDisplay">0</span> Điểm</div>
+        <div class="streak-pill" id="roomStreakPill">🔥 <span id="roomStreakDisplay">0</span></div>
+      </div>
+      <div class="diff-badge diff-medium" id="roomQIndexDisplay">Câu 1/10</div>
+    </div>
+    <div class="room-time-bar">
+      <div class="room-time-fill" id="roomTimeFill" style="width:100%"></div>
+    </div>
+    <div class="question-card">
+      <div class="q-label" id="roomTimeLabel">Còn 30s</div>
+      <div class="q-text" id="roomQText">Đang tải câu hỏi...</div>
+    </div>
+    <div class="answers-grid" id="roomAnswersGrid"></div>
+    <div class="why-box" id="roomWhyBox" style="display:none"></div>
+    
+    <!-- Leaderboard mini preview after question -->
+    <div id="roomMiniLeaderboard" style="display:none;margin-top:14px;background:var(--card);padding:12px;border-radius:var(--radius)">
+      <div style="font-size:.72rem;font-weight:800;color:var(--amber);text-transform:uppercase;margin-bottom:8px">🏆 Bảng Xếp Hạng Lớp</div>
+      <div id="roomMiniLeaderList"></div>
+    </div>
+  </div>
+
+  <!-- Tổng kết trận đấu (Finished Podium State) -->
+  <div id="roomFinishedView" style="display:none;text-align:center;width:100%;max-width:440px">
+    <div style="font-size:3.5rem;margin-bottom:8px" id="roomPodiumEmoji">🏆</div>
+    <div class="screen-title">Trận Đấu Kết Thúc!</div>
+    <p style="font-size:.85rem;color:var(--muted);font-weight:700;margin-bottom:16px" id="roomRankMsg">Bạn đạt kết quả tuyệt vời!</p>
+    
+    <div style="background:var(--card);border-radius:var(--radius);padding:18px;border:1px solid rgba(255,255,255,.1);margin-bottom:18px">
+      <div style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Điểm Số Của Bạn</div>
+      <div style="font-family:'Fredoka One',cursive;font-size:2.2rem;color:var(--amber);margin-bottom:10px" id="roomFinalScore">0</div>
+      <div style="display:flex;justify-content:center;gap:12px">
+        <span class="pill" style="background:rgba(74,222,128,.15);color:#4ade80;border:1px solid rgba(74,222,128,.3)" id="roomRewardXp">+350 XP</span>
+        <span class="pill" style="background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3)" id="roomRewardCoins">+35 🪙</span>
+      </div>
+    </div>
+    
+    <button class="btn btn-amber" style="width:100%" onclick="exitRoomToHome()">Về Trang Chính →</button>
+  </div>
+</div>
+
+<!-- ══ 4: GAME ════════════════════════════════════════════════ -->
+<div class="screen" id="gameScreen">
+  <div class="game-header">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <div class="pill">⭐ <span id="xpDisplay">0</span> XP</div>
+      <div class="streak-pill" id="streakPill">🔥 <span id="streakDisplay">0</span></div>
+      <div class="pill" id="activePowerupPill" style="display:none;background:rgba(245,158,11,.18);border:1px solid rgba(245,158,11,.4)"></div>
+    </div>
+    <div class="diff-badge diff-easy" id="diffBadge">🟢 Easy</div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <div class="question-card">
+    <div class="q-label" id="qLabel">Question <span id="qNum">1</span> of 10</div>
+    <div class="domain-badge" id="domainBadge" style="display:none"></div>
+    <div class="retry-badge" id="retryBadge" style="display:none" data-i18n="retry_badge">🔁 Second look</div>
+    <div class="q-text" id="qText">Loading…</div>
+  </div>
+  <div class="answers-grid" id="answersGrid"></div>
+  <div class="why-box" id="whyBox" style="display:none"></div>
+  <button class="btn btn-amber" id="nextBtn" style="display:none;width:100%;margin-top:14px" onclick="advanceQ()">Next →</button>
+  <div class="skill-btns" id="skillButtons"></div>
+</div>
+
+<!-- ══ 5: REWARD ═════════════════════════════════════════════ -->
+<div class="screen" id="rewardScreen">
+  <div id="questCompleteLabel" style="font-size:.78rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)" data-i18n="quest_complete">Quest Complete!</div>
+  <div class="xp-gained" id="rewardXP">+0 XP</div>
+  <div id="levelupBanner" style="display:none" class="levelup-banner">
+    <div class="levelup-label" id="levelUpLabel" data-i18n="level_up_label">⬆️ LEVEL UP!</div>
+    <div class="levelup-sub" id="levelupSub"></div>
+  </div>
+  <div style="width:100%;max-width:420px;margin-bottom:24px">
+    <div class="xp-label"><span id="rewardXpCurrent">0</span> / <span id="rewardXpNext">300</span> XP</div>
+    <div class="xp-track"><div class="xp-fill" id="rewardXpBar" style="width:0%"></div></div>
+  </div>
+  <div class="found-label" id="foundLabel" style="display:none" data-i18n="found_label">🎒 You found:</div>
+  <div class="reward-items" id="rewardItems"></div>
+  <div class="reward-btns">
+    <button class="btn btn-amber" style="width:100%" onclick="goToTopics()" data-i18n="btn_play_again">Play Again!</button>
+  </div>
+</div>
+
+<!-- ══ 6: INVENTORY ══════════════════════════════════════════ -->
+<div class="screen" id="inventoryScreen">
+  <div class="inv-header">
+    <div style="font-size:3rem" id="invHeroEmoji">🧑</div>
+    <div class="inv-title-block">
+      <div class="inv-title" id="invTitle">Math Squire</div>
+      <div class="inv-level" id="invLevel">Level 1 · 0 XP</div>
+    </div>
+  </div>
+  <div style="width:100%;margin-bottom:24px">
+    <div class="xp-label"><span id="invXpCurrent">0</span> / <span id="invXpNext">300</span> XP</div>
+    <div class="xp-track"><div class="xp-fill" id="invXpBar" style="width:0%"></div></div>
+  </div>
+  <div id="invContent" style="width:100%"></div>
+</div>
+
+<!-- ══ 7: GUILD HALL ════════════════════════════════════════ -->
+<div class="screen" id="guildScreen">
+  <div class="screen-title" data-i18n="guild_title">🏰 The Guild Hall</div>
+
+  <div class="guild-tabs">
+    <button class="gtab active" id="gtab-alltime"  onclick="switchGuild('alltime')" data-i18n="gtab_alltime">🏆 All Time</button>
+    <button class="gtab"        id="gtab-weekly"   onclick="switchGuild('weekly')"  data-i18n="gtab_weekly">🗓️ This Week</button>
+    <button class="gtab"        id="gtab-improved" onclick="switchGuild('improved')" data-i18n="gtab_improved">📈 Improved</button>
+    <button class="gtab"        id="gtab-streak"   onclick="switchGuild('streak')" data-i18n="gtab_streak">🔥 Best Streak</button>
+    <button class="gtab"        id="gtab-collection" onclick="switchGuild('collection')" data-i18n="gtab_collection">🛍️ Collection</button>
+    <button class="gtab"        id="gtab-mastery"  onclick="switchGuild('mastery')" data-i18n="gtab_mastery">🎓 Units Mastered</button>
+    <button class="gtab"        id="gtab-topic"    onclick="switchGuild('topic')"   data-i18n="gtab_topic">📚 By Topic</button>
+  </div>
+
+  <div class="unit-picker" id="unitPicker">
+    <!-- filled dynamically -->
+  </div>
+
+  <div class="guild-list" id="guildList">
+    <div class="guild-empty">Loading adventurers…</div>
+  </div>
+
+  <button class="btn btn-amber" style="width:100%" onclick="goToTopics()" data-i18n="btn_play">Play! →</button>
+</div>
+
+<!-- Item power-up modal (bottom sheet) -->
+<div id="itemModal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.78);align-items:flex-end;justify-content:center">
+  <div style="background:var(--surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;padding:24px 24px 36px;width:100%;max-width:560px;text-align:center;border-top:2px solid rgba(255,255,255,.1);animation:slideUp .22s ease">
+    <div style="width:40px;height:4px;background:rgba(255,255,255,.18);border-radius:100px;margin:0 auto 18px"></div>
+    <div id="modalEmoji"  style="font-size:3.2rem;margin-bottom:8px"></div>
+    <div id="modalName"   style="font-family:'Fredoka One',cursive;font-size:1.55rem;margin-bottom:4px"></div>
+    <div id="modalRarity" style="font-size:.68rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin-bottom:16px"></div>
+    <div id="modalPowerBlock" style="background:var(--card);border-radius:var(--radius);padding:12px 16px;margin-bottom:18px;text-align:left">
+      <div id="modalPowerLabel" style="font-size:.68rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:5px"></div>
+      <div id="modalPowerDesc"  style="font-size:.9rem;font-weight:700;color:var(--text);line-height:1.5"></div>
+    </div>
+    <div id="modalAlreadyMsg" style="display:none;font-size:.78rem;color:var(--amber);font-weight:700;margin-bottom:12px;background:rgba(245,158,11,.1);border-radius:10px;padding:8px 12px"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost btn-sm" style="flex:1" onclick="closeItemModal()" data-i18n="modal_cancel">✕ Cancel</button>
+      <button class="btn btn-amber btn-sm" id="modalEquipBtn" style="flex:2;display:flex;align-items:center;justify-content:center;gap:6px">⚡ Equip!</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 8: WARDROBE ════════════════════════════════════════════ -->
+<div class="screen" id="wardrobeScreen" style="justify-content:flex-start">
+  <div class="screen-title" style="margin-top:8px" data-i18n="wardrobe_title">🎨 Wardrobe</div>
+  <p class="screen-sub" data-i18n="wardrobe_sub">Unlock styles by earning XP</p>
+  <div class="guild-tabs" style="flex-shrink:0;width:100%;margin-bottom:18px">
+    <button class="gtab active" id="wtab-theme"  onclick="switchWardrobeTab('theme')"  data-i18n="wtab_theme">🎨 Themes</button>
+    <button class="gtab"        id="wtab-avatar" onclick="switchWardrobeTab('avatar')" data-i18n="wtab_avatar">👤 Avatars</button>
+    <button class="gtab"        id="wtab-frame"  onclick="switchWardrobeTab('frame')"  data-i18n="wtab_frame">✨ Frames</button>
+  </div>
+  <div id="wardrobeContent" style="width:100%;overflow-y:auto;flex:1;min-height:0"></div>
+</div>
+
+<!-- ══ 9: MY PLAYER ═══════════════════════════════════════════ -->
+<div class="screen" id="playerScreen" style="justify-content:flex-start;padding-top:20px">
+  <!-- Hero -->
+  <div class="mp-hero">
+    <div class="mp-avatar" id="mpAvatar">🧑</div>
+    <div class="mp-info">
+      <div class="mp-name" id="mpName">Adventurer</div>
+      <div class="mp-title" id="mpTitle">Math Squire</div>
+      <div class="mp-lvl" id="mpLvl">Level 1</div>
+    </div>
+  </div>
+  <div id="mpXpLabel" style="font-size:.72rem;font-weight:800;color:var(--muted);text-align:center;margin:-2px 0 6px">0 XP total</div>
+
+  <!-- Quick stats -->
+  <div class="mp-stats">
+    <div class="mp-stat"><div class="mp-stat-val" id="mpRounds">0</div><div class="mp-stat-lbl" data-i18n="mp_quests">Quests</div></div>
+    <div class="mp-stat"><div class="mp-stat-val" id="mpItems">0</div><div class="mp-stat-lbl" data-i18n="mp_items">Items</div></div>
+    <div class="mp-stat"><div class="mp-stat-val" id="mpWeekXp">—</div><div class="mp-stat-lbl" data-i18n="mp_week_xp">Week XP</div></div>
+  </div>
+
+  <!-- Unit study links & progress -->
+  <div class="mp-sec-hdr" data-i18n="mp_guides">📚 Unit Study Guides</div>
+  <p id="mpHint" style="font-size:.72rem;color:var(--muted);font-weight:700;text-align:center;margin:-6px 0 12px;line-height:1.5" data-i18n="mp_hint">
+    Tap a link to open the official Illustrative Mathematics lessons
+  </p>
+  <div id="mpUnits" style="width:100%;display:flex;flex-direction:column;gap:9px"></div>
+
+  <!-- Actions -->
+  <div style="width:100%;margin-top:20px;flex-shrink:0">
+    <button class="btn btn-amber btn-sm" style="width:100%" onclick="goToTopics()" data-i18n="btn_play">Play! →</button>
+  </div>
+</div>
+
+<!-- ── Bottom Navigation ── -->
+<nav id="bottomNav">
+  <button class="bnav-tab" id="bnav-play"  onclick="navTo('play')">
+    <span class="bnav-icon">⚔️</span><span>Play</span>
+  </button>
+  <button class="bnav-tab" id="bnav-home"  onclick="navTo('home')">
+    <span class="bnav-icon">🏠</span><span>Home</span>
+  </button>
+  <button class="bnav-tab" id="bnav-me"    onclick="navTo('me')">
+    <span class="bnav-icon">🧑</span><span>Me</span>
+  </button>
+  <button class="bnav-tab" id="bnav-guild" onclick="navTo('guild')">
+    <span class="bnav-icon">🏰</span><span>Guild</span>
+  </button>
+  <button class="bnav-tab" id="bnav-bag"   onclick="navTo('bag')">
+    <span class="bnav-icon">🎒</span><span>Bag</span>
+  </button>
+  <button class="bnav-tab" id="bnav-shop"  onclick="navTo('shop')">
+    <span class="bnav-icon">🛍️</span><span>Shop</span>
+  </button>
+  <button class="bnav-tab" id="bnav-style" onclick="navTo('style')">
+    <span class="bnav-icon">🎨</span><span>Style</span>
+  </button>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════════════ -->
+<script>
+// ═══════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════
+
+// ═══════════════════════════════════════════
+// LANGUAGE SYSTEM
+// ═══════════════════════════════════════════
+let lang = localStorage.getItem('mq_lang') || 'vi';
+
+{% include '_i18n.js' %}
+
+function t(key, vars={}) {
+  const map = STRINGS[lang] || STRINGS.vi || STRINGS.en;
+  const str = map[key] ?? (STRINGS.vi && STRINGS.vi[key]) ?? STRINGS.en[key] ?? key;
+  return str.replace(/\{(\w+)\}/g, (_,k) => vars[k] ?? '');
+}
+
+function applyTranslations() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    el.placeholder = t(el.dataset.i18nPh);
+  });
+  const pill = document.getElementById('langPill');
+  if(pill) pill.textContent = lang === 'vi' ? '🌐 EN' : '🌐 VI';
+}
+
+function toggleLang(){
+  lang = lang === 'vi' ? 'en' : 'vi';
+  localStorage.setItem('mq_lang', lang);
+  document.documentElement.lang = lang;
+  applyTranslations();
+  reRenderCurrentScreen();
+}
+
+function reRenderCurrentScreen(){
+  const id = document.querySelector('.screen.active')?.id;
+  if(id === 'characterScreen')   renderCharacterScreen(false);
+  else if(id === 'topicScreen')  renderTopicScreen();
+  else if(id === 'gameScreen')   reRenderGameQuestion();
+  else if(id === 'rewardScreen') renderRewardScreen(session.prevLevel ?? getLevelInfo(character.xp).level);
+  else if(id === 'inventoryScreen') renderInventory();
+  else if(id === 'guildScreen')  renderGuildList();
+  else if(id === 'wardrobeScreen') renderWardrobeContent();
+  else if(id === 'playerScreen') showPlayerScreen();
+}
+
+// Re-render question text + choice labels in current language (called on lang toggle mid-round)
+function reRenderGameQuestion(){
+  if(answered && document.getElementById('whyBox')?.style.display==='') showWhy();
+  if(!currentQ) return;
+  document.getElementById('qLabel').innerHTML = t('q_of',{n:`<span id="qNum">${session.qIndex+1}</span>`});
+  document.getElementById('qText').innerHTML = applyVocabBridge(currentQ[lang] || currentQ.en || currentQ.question || '');
+  const diff = currentQ._diff ?? 0;
+  const badge=document.getElementById('diffBadge');
+  badge.textContent=t('diff_'+diff); badge.className='diff-badge '+DIFF_CLASSES[diff];
+  const retryBadge=document.getElementById('retryBadge');
+  if(retryBadge) retryBadge.style.display = currentQ._retry ? '' : 'none';
+  const domBadge=document.getElementById('domainBadge');
+  if(currentQ.domain && CMAS_DOMAINS[currentQ.domain]){
+    domBadge.textContent=CMAS_DOMAINS[currentQ.domain]; domBadge.style.display='';
+  } else { domBadge.style.display='none'; }
+  // MC only: update answer button labels for language toggle
+  if(!currentQ.type || currentQ.type==='mc'){
+    const displayChoices = (lang==='es' && currentQ.choices_es) ? currentQ.choices_es : currentQ.choices;
+    document.querySelectorAll('.ans-btn').forEach((btn,i)=>{
+      if(displayChoices[i] !== undefined) btn.innerHTML = applyVocabBridge(displayChoices[i]);
+    });
+  }
+  loadSkillButtons();
+}
+
+// Injected by the server from app.py's LEVELS table — the single source of
+// truth for the level ladder. Do not hard-code a second copy here; the two
+// drifted apart once already (levels 3-5 had different titles server-side).
+const LEVELS = {{ levels|tojson }};
+
+// IM 6th Grade units (exact names from Illustrative Mathematics)
+// Injected from app.py's UNITS catalog — the single source of truth shared
+// with the teacher dashboard and the server's own unit validation.
+const UNIT_GROUPS = {{ unit_groups|tojson }};
+
+// Sub-topics, also from app.py's UNITS catalog. Each inherits its parent's
+// icon and colour.
+const IM_UNITS = {{ sub_topics|tojson }};
+
+// Injected from app.py's ITEMS catalog.
+const ITEMS = {{ items|tojson }};
+const BY_RARITY = {};
+for(const [k,v] of Object.entries(ITEMS))(BY_RARITY[v.rarity]=BY_RARITY[v.rarity]||[]).push(k);
+
+const DIFF_SCHEDULE = [0,0,0,1,1,1,1,2,2,2];
+// Difficulty balance from app.py — see DIFF_XP_MULT there for why these exist.
+const DIFF_BALANCE  = {{ diff_balance|tojson }};
+const DIFF_XP       = [15,22,30];
+const DIFF_LABELS   = ['🟢 Easy','🟡 Medium','🔴 Hard'];
+const DIFF_CLASSES  = ['diff-easy','diff-medium','diff-hard'];
+
+// ── Vocabulary bridge — key math terms shown with English gloss in ES mode ──
+// Multi-word terms first (longest wins when terms overlap)
+const VOCAB_BRIDGE = [
+  ['área de superficie',          'surface area'],
+  ['prisma rectangular',          'rectangular prism'],
+  ['triángulo rectángulo',        'right triangle'],
+  ['medida de tendencia central', 'measure of center'],
+  ['desviación absoluta media',   'mean absolute deviation'],
+  ['recta numérica doble',        'double number line'],
+  ['razones equivalentes',        'equivalent ratios'],
+  ['tabla de razones',            'ratio table'],
+  ['diagrama de puntos',          'dot plot'],
+  ['valor absoluto',              'absolute value'],
+  ['valor atípico',               'outlier'],
+  ['plano de coordenadas',        'coordinate plane'],
+  ['recta numérica',              'number line'],
+  ['tasa unitaria',               'unit rate'],
+  ['longitud del lado',           'side length'],
+  ['paralelogramo',               'parallelogram'],
+  ['trapezoide',                  'trapezoid'],
+  ['triángulo',                   'triangle'],
+  ['rectángulo',                  'rectangle'],
+  ['histograma',                  'histogram'],
+  ['variabilidad',                'variability'],
+  ['coeficiente',                 'coefficient'],
+  ['exponente',                   'exponent'],
+  ['desigualdad',                 'inequality'],
+  ['cuadrante',                   'quadrant'],
+  ['cuadrado',                    'square'],
+  ['polígono',                    'polygon'],
+  ['ecuación',                    'equation'],
+  ['expresión',                   'expression'],
+  ['mediana',                     'median'],
+  ['volumen',                     'volume'],
+  ['entero',                      'integer'],
+  ['porcentaje',                  'percentage'],
+  ['cuartil',                     'quartile'],
+  ['altura',                      'height'],
+  ['moda',                        'mode'],
+  ['media',                       'mean'],
+  ['rango',                       'range'],
+  ['razón',                       'ratio'],
+  ['cubo',                        'cube'],
+  ['tasa',                        'rate'],
+  ['área',                        'area'],
+  ['DAM',                         'MAD'],
+  ['RIC',                         'IQR'],
+  ['MCD',                         'GCF'],
+  ['MCM',                         'LCM'],
+];
+
+// Escapes for both text and quoted-attribute contexts. Any value that reaches
+// innerHTML must go through this — student names are attacker-controlled.
+function escHtml(s){ return String(s ?? '')
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  .replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+// Returns HTML string: key terms highlighted amber with small English gloss.
+// When lang==='en', just returns HTML-escaped plain text.
+function applyVocabBridge(text){
+  if(lang !== 'es') return escHtml(text);
+  const sp = 'a-záéíóúüñA-ZÁÉÍÓÚÜÑ';
+  const found = [];
+  for(const [es, en] of VOCAB_BRIDGE){
+    const esc = es.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    const re  = new RegExp(`(?<![${sp}])${esc}(?![${sp}])`, 'gi');
+    let m;
+    while((m = re.exec(text)) !== null){
+      const s = m.index, e = m.index + m[0].length;
+      if(!found.some(f => f.s < e && f.e > s))
+        found.push({s, e, orig: m[0], en});
+    }
+  }
+  found.sort((a,b) => a.s - b.s);
+  let out = '', pos = 0;
+  for(const {s, e, orig, en} of found){
+    out += escHtml(text.slice(pos, s));
+    out += `<span class="vocab-hl">${escHtml(orig)}</span><span class="vocab-en">(${en})</span>`;
+    pos  = e;
+  }
+  return out + escHtml(text.slice(pos));
+}
+
+// ─── Cosmetics catalog ───────────────────────────────────────
+// Unlock thresholds come from app.py's COSMETICS table — the single source of
+// truth, and the same numbers the server enforces on /equip. The visual data
+// (palettes, emoji, icons) stays here; only the XP gates are injected.
+const COSMETIC_XP = {{ cosmetic_xp|tojson }};
+// The skins catalog from app.py — ids, names, rarity and price. Themes keep
+// their palettes below; everything else about a skin lives server-side so a new
+// one can be added in a single line there.
+const SKINS      = {{ skins|tojson }};
+const FREE_SKINS = {{ free_skins|tojson }};
+const SKIN_BY_TYPE = SKINS.reduce((m,k)=>{ (m[k.type]=m[k.type]||{})[k.id]=k; return m; },{});
+const RARITY_COLOR = {common:'#94a3b8',uncommon:'#4ade80',rare:'#60a5fa',legendary:'#fbbf24'};
+function ownsSkin(id){ return (character.owned||[]).includes(id); }
+
+const THEMES = {
+  arcane:{ name:'Arcane', name_es:'Arcano',  emoji:'🔮',
+    vars:{'--bg':'#0d0c1d','--surface':'#16152b','--card':'#1e1d38','--card2':'#252448',
+          '--accent':'#a855f7','--text':'#f0eeff','--muted':'#7b78a8'},
+    bgImage:'radial-gradient(ellipse at 15% 10%,rgba(168,85,247,.12) 0%,transparent 55%),radial-gradient(ellipse at 85% 85%,rgba(245,158,11,.07) 0%,transparent 55%)' },
+  forest:{ name:'Forest', name_es:'Bosque',  emoji:'🌿',
+    vars:{'--bg':'#071a0d','--surface':'#0d2318','--card':'#132e1f','--card2':'#183a28',
+          '--accent':'#4ade80','--text':'#e6f5ec','--muted':'#5a8a6c'},
+    bgImage:'radial-gradient(ellipse at 20% 15%,rgba(74,222,128,.13) 0%,transparent 55%),radial-gradient(ellipse at 80% 80%,rgba(0,212,170,.08) 0%,transparent 55%)' },
+  ember:{ name:'Ember',  name_es:'Brasa',    emoji:'🔥',
+    vars:{'--bg':'#190b03','--surface':'#241108','--card':'#31160a','--card2':'#3c1d0e',
+          '--accent':'#ff6b35','--text':'#fff0e8','--muted':'#9a5a38'},
+    bgImage:'radial-gradient(ellipse at 15% 10%,rgba(255,107,53,.14) 0%,transparent 55%),radial-gradient(ellipse at 85% 85%,rgba(245,158,11,.09) 0%,transparent 55%)' },
+  ocean:{ name:'Tide',   name_es:'Marea',    emoji:'🌊',
+    vars:{'--bg':'#030d1a','--surface':'#081426','--card':'#0c1c33','--card2':'#102540',
+          '--accent':'#60a5fa','--text':'#e5eeff','--muted':'#4d6e92'},
+    bgImage:'radial-gradient(ellipse at 20% 15%,rgba(96,165,250,.13) 0%,transparent 55%),radial-gradient(ellipse at 80% 80%,rgba(0,212,170,.08) 0%,transparent 55%)' },
+  void:{ name:'Void',    name_es:'Vacío',    emoji:'🌙',
+    vars:{'--bg':'#050408','--surface':'#090810','--card':'#0e0c18','--card2':'#13101f',
+          '--accent':'#818cf8','--text':'#d5d2f8','--muted':'#4d4a6a'},
+    bgImage:'radial-gradient(ellipse at 20% 15%,rgba(129,140,248,.10) 0%,transparent 55%),radial-gradient(ellipse at 80% 80%,rgba(167,139,250,.06) 0%,transparent 55%)' },
+  solar:{ name:'Solar',  name_es:'Solar',    emoji:'☀️',
+    vars:{'--bg':'#181200','--surface':'#221b00','--card':'#2c2300','--card2':'#352c00',
+          '--accent':'#f59e0b','--text':'#fff8e0','--muted':'#8a7030'},
+    bgImage:'radial-gradient(ellipse at 15% 10%,rgba(245,158,11,.16) 0%,transparent 55%),radial-gradient(ellipse at 85% 85%,rgba(255,107,53,.09) 0%,transparent 55%)' },
+};
+// Injected from app.py's AVATARS catalog — the same table the display board
+// renders from, so a student's chosen avatar looks the same everywhere.
+const AVATARS = {{ avatars|tojson }};
+const FRAMES = [
+  {id:'none',   name:'No Frame', name_es:'Sin Marco', icon:'✕'},
+  {id:'silver', name:'Silver',   name_es:'Plata',     icon:'🥈'},
+  {id:'gold',   name:'Gold',     name_es:'Oro',       icon:'👑'},
+  {id:'dragon', name:'Dragon',   name_es:'Dragón',    icon:'🐉'},
+  {id:'legend', name:'Legend',   name_es:'Leyenda',   icon:'🌟'},
+];
+
+// Flat XP amounts for the bonus items. Both the description a student reads and
+// the code that awards the XP read these same numbers, so they cannot drift —
+// previously every one of these labels promised twice what the game paid out.
+const ITEM_XP = {
+  gold_coin:     20,   // flat bonus at round end
+  silver_crown: 100,   // flat bonus at round end
+  star_fragment:500,   // flat bonus at round end
+  magic_gem:     30,   // per correct answer
+};
+
+// Powers keyed by ITEMS key
+const ITEM_POWERS = {
+  health_potion:  {label:'Streak Shield',      label_es:'Escudo de Racha',           desc:"First miss won't reset your streak",                        desc_es:'El primer error no reinicia tu racha'},
+  gold_coin:      {label:`+${ITEM_XP.gold_coin} Bonus XP`,  label_es:`+${ITEM_XP.gold_coin} XP Extra`,       desc:'Flat bonus XP added at round end',                          desc_es:'XP extra añadidos al final de la ronda'},
+  trail_bread:    {label:'Head Start ×2',       label_es:'Ventaja Inicial ×2',        desc:'Start the round already on a 2-streak',                     desc_es:'Comienzas la ronda ya con racha de 2'},
+  firewood:       {label:'Easy Start',          label_es:'Inicio Fácil',              desc:'First question of the round is always Easy',                desc_es:'La primera pregunta de la ronda siempre es Fácil'},
+  adventure_pack: {label:'+2 Item Draw',        label_es:'+2 Objetos Extra',          desc:'Draw 2 extra items at round end',                           desc_es:'Obtienes 2 objetos adicionales al final de la ronda'},
+  rope:           {label:'Skip Pass',           label_es:'Pase de Salto',             desc:'Skip one question without losing your streak',              desc_es:'Salta una pregunta sin perder tu racha'},
+  iron_sword:     {label:'Hard Bonus 2×',       label_es:'Bono Difícil 2×',          desc:'Hard questions give double base XP this round',             desc_es:'Las preguntas difíciles dan el doble de XP esta ronda'},
+  wooden_shield:  {label:'Auto-Shield',         label_es:'Escudo Automático',         desc:'One wrong answer eliminated every question — those questions pay half XP',                desc_es:'Una respuesta incorrecta eliminada cada pregunta — esas preguntas dan la mitad de XP'},
+  wizard_hat:     {label:'50/50',               label_es:'50/50',                     desc:'Eliminate 2 wrong answers — one use, that question pays half XP',                       desc_es:'Elimina 2 respuestas incorrectas — un uso, esa pregunta da la mitad de XP'},
+  spell_book:     {label:'Reveal Answer',       label_es:'Revelar Respuesta',         desc:'Highlights the correct answer — one use, that question pays half XP',                   desc_es:'Resalta la respuesta correcta — un uso, esa pregunta da la mitad de XP'},
+  compass:        {label:'All Easy Mode',       label_es:'Modo Todo Fácil',           desc:'Every question this round is Easy — the round pays the Easy rate',                         desc_es:'Cada pregunta de esta ronda es Fácil — la ronda paga la tarifa Fácil'},
+  magic_wand:     {label:'2× Streak Mult',      label_es:'2× Multiplicador de Racha', desc:'Your streak bonus multiplier is doubled all round',         desc_es:'Tu multiplicador de racha se duplica toda la ronda'},
+  lantern:        {label:'Spotlight',           label_es:'Foco de Luz',               desc:'Dims all wrong answers so the right one shines — one use, that question pays half XP',  desc_es:'Oscurece las incorrectas para que brille la correcta — un uso, esa pregunta da la mitad de XP'},
+  leather_helm:   {label:'Streak Guard',        label_es:'Guardián de Racha',         desc:"Streak can't break this round",                             desc_es:'La racha no puede romperse esta ronda'},
+  crystal_orb:    {label:'2× XP',              label_es:'2× XP',                     desc:'Double XP on every question this round',                    desc_es:'Doble XP en cada pregunta esta ronda'},
+  silver_crown:   {label:`+${ITEM_XP.silver_crown} Bonus XP`, label_es:`+${ITEM_XP.silver_crown} XP Extra`,  desc:`+${ITEM_XP.silver_crown} XP bonus added at round end`,      desc_es:`+${ITEM_XP.silver_crown} XP de bono al final de la ronda`},
+  steel_sword:    {label:'Relentless',          label_es:'Implacable',                desc:'Every correct answer always triggers at least 2× streak bonus', desc_es:'Cada respuesta correcta activa al menos bono de racha 2×'},
+  magic_gem:      {label:`+${ITEM_XP.magic_gem} per Correct`, label_es:`+${ITEM_XP.magic_gem} por Correcta`, desc:`+${ITEM_XP.magic_gem} XP for every correct answer this round`, desc_es:`+${ITEM_XP.magic_gem} XP por cada respuesta correcta esta ronda`},
+  treasure_map:   {label:'Free Roam',           label_es:'Explorar Libre',            desc:'Pick ANY unit on the next topic screen — even locked ones!', desc_es:'¡Elige CUALQUIER unidad en la siguiente pantalla — incluso las bloqueadas!'},
+  iron_armor:     {label:'Unbreakable Streak',  label_es:'Racha Inquebrantable',      desc:"Streak can't break and starts at 1",                        desc_es:'La racha no puede romperse y empieza en 1'},
+  dragon_scale:   {label:'3× XP',             label_es:'3× XP',                     desc:'Triple XP multiplier for the entire round',                 desc_es:'Multiplicador triple de XP para toda la ronda'},
+  star_fragment:  {label:`+${ITEM_XP.star_fragment} XP`,     label_es:`+${ITEM_XP.star_fragment} XP`,       desc:`+${ITEM_XP.star_fragment} bonus XP added at round end`,     desc_es:`+${ITEM_XP.star_fragment} XP de bono al final de la ronda`},
+  mystic_amulet:  {label:'Lucky Charm',         label_es:'Amuleto de la Suerte',      desc:'Guaranteed legendary item drop at round end',               desc_es:'Objeto legendario garantizado al final de la ronda'},
+  enchanted_helm: {label:'Perfect Draw',        label_es:'Recompensa Perfecta',       desc:'Item rewards calculated as if you scored 10/10',            desc_es:'Las recompensas se calculan como si hubieras sacado 10/10'},
+};
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let character     = {name:'',xp:0,level:1,items:[],rounds_played:0,cosmetics:{},coins:0,owned:[]};
+let enabledUnits  = [];   // unit IDs available in this session
+let practiceWeak = [];    // sub-topic ids this student keeps getting wrong
+let myDifficulty = 2;     // 0=easy only, 1=up to medium, 2=full ramp (student's own choice)
+let session       = {topic:'',streak:0,maxStreak:0,qIndex:0,correct:0,xpEarned:0,newItems:[],retry:[],facedDiff:0};
+let currentQ      = null, answered = false;
+let equippedItem  = null; // {key, idx} staged for next round (not yet consumed); null = none
+let powerup       = {};   // active effects during a round
+
+// ═══════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  updateBottomNav(id);
+}
+
+function updateBottomNav(screenId){
+  const TAB_MAP = {
+    topicScreen:'play', characterScreen:'home', playerScreen:'me', shopScreen:'shop',
+    guildScreen:'guild', inventoryScreen:'bag', wardrobeScreen:'style',
+  };
+  const isGame  = screenId === 'gameScreen';
+  const isStart = screenId === 'startScreen';
+  const showNav = !isGame && !(isStart && !localStorage.getItem('mq_name'));
+  const nav = document.getElementById('bottomNav');
+  nav.style.display = showNav ? 'flex' : 'none';
+  document.body.classList.toggle('show-nav', showNav);
+  const pill = document.getElementById('langPill');
+  if(pill) pill.style.bottom = showNav ? '72px' : '16px';
+  document.querySelectorAll('.bnav-tab').forEach(t=>t.classList.remove('bnav-active'));
+  const key = TAB_MAP[screenId];
+  if(key) document.getElementById('bnav-'+key)?.classList.add('bnav-active');
+}
+
+function navTo(dest){
+  if(dest==='play')  goToTopics();
+  else if(dest==='home') { renderCharacterScreen(false); showScreen('characterScreen'); }
+  else if(dest==='me')   showPlayerScreen();
+  else if(dest==='guild') showGuild();
+  else if(dest==='bag')  { showScreen('inventoryScreen'); renderInventory(); }
+  else if(dest==='shop')  showShop();
+  else if(dest==='style') showWardrobe();
+}
+
+async function goToTopics(){
+  await renderTopicScreen();
+  showScreen('topicScreen');
+}
+
+// ═══════════════════════════════════════════
+// AUTH / LOGIN
+// ═══════════════════════════════════════════
+let allPlayers=[], authName='', authIsNew=false;
+
+async function fetchPlayers(){
+  try{
+    const r=await fetch('/api/players');
+    allPlayers=await r.json();
+    renderPlayerPicker();
+  }catch{ allPlayers=[]; }
+}
+
+const AV_MAP={knight:'🤺',archer:'🏹',mage:'🧙',wizard:'🧙‍♀️',bard:'🎭',dragon:'🐉',legend:'🌟'};
+
+function renderPickerList(players){
+  const el=document.getElementById('playerPicker');
+  if(!el) return;
+  if(players.length===0){
+    el.innerHTML='<div class="picker-empty">No match — type your name below to create it</div>';
+    return;
+  }
+  el.innerHTML='';
+  players.forEach(p=>{
+    const av=p.cosmetics?.avatar;
+    const emoji=(av&&av!=='auto'&&AV_MAP[av])||'🧑';
+    const btn=document.createElement('button');
+    btn.className='picker-chip';
+    const se=document.createElement('span'); se.className='picker-chip-emoji'; se.textContent=emoji;
+    const sn=document.createElement('span'); sn.className='picker-chip-name';  sn.textContent=p.name;
+    const sl=document.createElement('span'); sl.className='picker-chip-lv';    sl.textContent=`Lv ${p.level}`;
+    btn.append(se,sn,sl);
+    btn.addEventListener('click',()=>pickName(p.name));
+    el.appendChild(btn);
+  });
+}
+
+function filterPicker(query){
+  const q=query.toLowerCase().trim();
+  const filtered=q?allPlayers.filter(p=>p.name.toLowerCase().includes(q)):allPlayers;
+  renderPickerList(filtered);
+}
+
+function renderPlayerPicker(){
+  const wrap=document.getElementById('pickerWrap');
+  const orLbl=document.getElementById('authOrLabel');
+  if(!wrap||allPlayers.length===0) return;
+  wrap.style.display='';
+  if(orLbl) orLbl.style.display='';
+  renderPickerList(allPlayers);
+}
+
+function pickName(name){
+  authName=name; authIsNew=false;
+  showPinStep(name,false);
+let currentUser = null;
+
+async function checkAuth(){
+  try {
+    const r = await fetch('/api/auth/me');
+    const d = await r.json();
+    if(d.authenticated){
+      currentUser = { username: d.username, role: d.role };
+      updateUserHeader();
+      if(d.role === 'teacher'){
+        document.getElementById('startScreen').classList.remove('active');
+        document.getElementById('topicScreen').classList.remove('active');
+        // If teacher, can jump to teacher dashboard
+        location.href = '/teacher';
+      } else {
+        localStorage.setItem('mq_name', d.username);
+        const charData = await loadCharacter(d.username);
+        character = {...charData, name: d.username};
+        applyCosmetics(character.cosmetics);
+        renderCharacterScreen(false);
+        showScreen('characterScreen');
+      }
+    } else {
+      currentUser = null;
+      document.getElementById('userHeaderBar').style.display = 'none';
+      showScreen('startScreen');
+    }
+  } catch(e) {
+    console.error(e);
+    showScreen('startScreen');
+  }
+}
+
+async function submitName(){
+  const inp=document.getElementById('playerName');
+  const val=inp.value.trim();
+  if(!val){ inp.classList.add('shake'); inp.addEventListener('animationend',()=>inp.classList.remove('shake'),{once:true}); inp.focus(); return; }
+  const found=allPlayers.find(p=>p.name.toLowerCase()===val.toLowerCase());
+  authName=found?found.name:val;
+  authIsNew=!found;
+  showPinStep(authName,authIsNew);
+function updateUserHeader(){
+  const bar = document.getElementById('userHeaderBar');
+  if(!currentUser){ bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+  document.getElementById('userHeaderName').textContent = currentUser.username;
+  const isTeacher = currentUser.role === 'teacher';
+  const roleEl = document.getElementById('userHeaderRole');
+  roleEl.textContent = isTeacher ? '👨‍🏫 Giáo Viên' : '🎓 Học Sinh';
+  roleEl.style.background = isTeacher ? 'rgba(74,222,128,.15)' : 'rgba(168,85,247,.2)';
+  roleEl.style.color = isTeacher ? '#4ade80' : '#c084fc';
+  roleEl.style.borderColor = isTeacher ? 'rgba(74,222,128,.4)' : 'rgba(168,85,247,.4)';
+  document.getElementById('userHeaderTeacherBtn').style.display = isTeacher ? 'inline-block' : 'none';
+}
+
+function showPinStep(name,isNew){
+  document.getElementById('authStep1').style.display='none';
+  document.getElementById('authStep2').style.display='';
+  document.getElementById('authWho').textContent=name;
+  document.getElementById('authPinLbl').textContent=isNew?'Choose a 4-digit PIN:':'Enter your PIN:';
+  document.getElementById('authConfirmWrap').style.display=isNew?'':'none';
+  document.getElementById('authSubmitBtn').textContent=isNew?'Begin Your Quest! 🔥':'Continue →';
+  document.getElementById('pinInput').value='';
+  if(isNew) document.getElementById('pinConfirm').value='';
+  document.getElementById('authError').style.display='none';
+  document.getElementById('pinInput').focus();
+function switchAuthTab(tab){
+  const isLogin = tab === 'login';
+  document.getElementById('tabAuthLogin').style.background = isLogin ? 'var(--amber)' : 'transparent';
+  document.getElementById('tabAuthLogin').style.color = isLogin ? '#1c1917' : 'var(--muted)';
+  document.getElementById('tabAuthRegister').style.background = !isLogin ? 'var(--accent)' : 'transparent';
+  document.getElementById('tabAuthRegister').style.color = !isLogin ? '#fff' : 'var(--muted)';
+  document.getElementById('formLogin').style.display = isLogin ? 'block' : 'none';
+  document.getElementById('formRegister').style.display = !isLogin ? 'block' : 'none';
+  document.getElementById('authErrMsg').style.display = 'none';
+}
+
+async function submitPin(){
+  const pin=document.getElementById('pinInput').value.trim();
+  if(!/^\d{4}$/.test(pin)){ _authErr('Enter a 4-digit PIN'); _shake('pinInput'); return; }
+  if(authIsNew){
+    const conf=document.getElementById('pinConfirm').value.trim();
+    if(pin!==conf){ _authErr("PINs don't match — try again"); _shake('pinConfirm'); return; }
+let selectedRole = 'student';
+function updateRoleUI(){
+  const roles = document.getElementsByName('userRole');
+  for(const r of roles) if(r.checked) selectedRole = r.value;
+  const isStu = selectedRole === 'student';
+  document.getElementById('roleLblStudent').style.borderColor = isStu ? 'var(--accent)' : 'rgba(255,255,255,.12)';
+  document.getElementById('roleLblStudent').style.background = isStu ? 'rgba(168,85,247,.15)' : 'transparent';
+  document.getElementById('roleLblTeacher').style.borderColor = !isStu ? 'var(--accent)' : 'rgba(255,255,255,.12)';
+  document.getElementById('roleLblTeacher').style.background = !isStu ? 'rgba(168,85,247,.15)' : 'transparent';
+}
+
+async function doLogin(){
+  const u = document.getElementById('loginUsername').value.trim();
+  const p = document.getElementById('loginPassword').value.trim();
+  const errEl = document.getElementById('authErrMsg');
+  if(!u || !p){
+    errEl.textContent = 'Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.';
+    errEl.style.display = 'block';
+    return;
+  }
+  const btn=document.getElementById('authSubmitBtn');
+  btn.disabled=true;
+  try{
+    const res=await fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:authName,pin})});
+    const data=await res.json();
+    if(!data.ok){ _authErr('Wrong PIN — try again!'); _shake('pinInput'); document.getElementById('pinInput').value=''; document.getElementById('pinInput').focus(); btn.disabled=false; return; }
+    localStorage.setItem('mq_name',authName);
+    const charData=await loadCharacter(authName);
+    character={...charData,name:authName};
+    applyCosmetics(character.cosmetics);
+    renderCharacterScreen(data.status==='created');
+    document.getElementById('notYouBtn').style.display='block';
+    showScreen('characterScreen');
+  }catch{ _authErr('Connection error — try again'); btn.disabled=false; }
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({username: u, password: p})
+    });
+    const d = await res.json();
+    if(!d.ok){
+      errEl.textContent = d.error || 'Đăng nhập thất bại';
+      errEl.style.display = 'block';
+      return;
+    }
+    currentUser = { username: d.username, role: d.role };
+    checkAuth();
+  } catch(e) {
+    errEl.textContent = 'Lỗi kết nối máy chủ.';
+    errEl.style.display = 'block';
+  }
+}
+
+function _authErr(msg){ const el=document.getElementById('authError'); el.textContent=msg; el.style.display=''; }
+function _shake(id){ const el=document.getElementById(id); el.classList.add('shake'); el.addEventListener('animationend',()=>el.classList.remove('shake'),{once:true}); }
+async function doRegister(){
+  const u = document.getElementById('regUsername').value.trim();
+  const p = document.getElementById('regPassword').value.trim();
+  const errEl = document.getElementById('authErrMsg');
+  if(!u || !p){
+    errEl.textContent = 'Vui lòng nhập đầy đủ thông tin đăng ký.';
+    errEl.style.display = 'block';
+    return;
+  }
+  try {
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({username: u, password: p, role: selectedRole})
+    });
+    const d = await res.json();
+    if(!d.ok){
+      errEl.textContent = d.error || 'Đăng ký thất bại';
+      errEl.style.display = 'block';
+      return;
+    }
+    currentUser = { username: d.username, role: d.role };
+    checkAuth();
+  } catch(e) {
+    errEl.textContent = 'Lỗi kết nối máy chủ.';
+    errEl.style.display = 'block';
+  }
+}
+
+async function doLogout(){
+  await fetch('/api/auth/logout', {method: 'POST'});
+  currentUser = null;
+  localStorage.removeItem('mq_name');
+  location.reload();
+}
+
+// ═══════════════════════════════════════════
+// LIVE QUIZ ROOM (STUDENT MODE)
+// ═══════════════════════════════════════════
+let currentRoomCode = null;
+let roomPollingInterval = null;
+let roomQuestionStartTime = 0;
+let roomAnsweredThisQ = false;
+let lastRenderedQIdx = -1;
+
+function openRoomJoinModal(){
+  document.getElementById('roomCodeInput').value = '';
+  document.getElementById('roomJoinErr').style.display = 'none';
+  document.getElementById('roomJoinModal').style.display = 'flex';
+  document.getElementById('roomCodeInput').focus();
+}
+
+function closeRoomJoinModal(){
+  document.getElementById('roomJoinModal').style.display = 'none';
+}
+
+async function submitRoomJoin(){
+  const code = document.getElementById('roomCodeInput').value.trim();
+  const errEl = document.getElementById('roomJoinErr');
+  if(!code || code.length !== 6){
+    errEl.textContent = 'Vui lòng nhập đúng 6 chữ số mã phòng.';
+    errEl.style.display = 'block';
+    return;
+  }
+  const name = currentUser ? currentUser.username : (character ? character.name : 'Học Sinh');
+  try {
+    const r = await fetch('/api/room/join', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({code, name})
+    });
+    const d = await r.json();
+    if(!d.ok){
+      errEl.textContent = d.error || 'Không thể vào phòng.';
+      errEl.style.display = 'block';
+      return;
+    }
+    closeRoomJoinModal();
+    currentRoomCode = code;
+    enterRoomMatch(d);
+  } catch(e) {
+    errEl.textContent = 'Lỗi kết nối máy chủ.';
+    errEl.style.display = 'block';
+  }
+}
+
+function enterRoomMatch(roomData){
+  document.getElementById('bottomNav').style.display = 'none';
+  showScreen('roomPlayScreen');
+  document.getElementById('roomLobbyTitle').textContent = roomData.title || 'Phòng Thi Đấu';
+  document.getElementById('roomLobbyCode').textContent = roomData.code;
+  document.getElementById('roomLobbyView').style.display = 'block';
+  document.getElementById('roomActiveView').style.display = 'none';
+  document.getElementById('roomFinishedView').style.display = 'none';
+  
+  if(roomPollingInterval) clearInterval(roomPollingInterval);
+  roomPollingInterval = setInterval(pollRoomState, 1200);
+  pollRoomState();
+}
+
+async function pollRoomState(){
+  if(!currentRoomCode) return;
+  try {
+    const r = await fetch(`/api/room/state/${currentRoomCode}`);
+    const d = await r.json();
+    if(!d.ok) return;
+
+    if(d.status === 'waiting'){
+      document.getElementById('roomLobbyView').style.display = 'block';
+      document.getElementById('roomActiveView').style.display = 'none';
+      document.getElementById('roomFinishedView').style.display = 'none';
+      document.getElementById('roomPlayerCount').textContent = d.player_count;
+      const pList = document.getElementById('roomPlayersList');
+      pList.innerHTML = d.leaderboard.map(p => `<span class="room-player-tag">🧑 ${p.name}</span>`).join('');
+    } else if(d.status === 'active'){
+      document.getElementById('roomLobbyView').style.display = 'none';
+      document.getElementById('roomActiveView').style.display = 'block';
+      document.getElementById('roomFinishedView').style.display = 'none';
+      
+      const q = d.question;
+      if(q){
+        document.getElementById('roomQIndexDisplay').textContent = `Câu ${q.index + 1} / ${d.total_questions}`;
+        document.getElementById('roomTimeLabel').textContent = `Còn ${d.time_left}s`;
+        const timeRatio = Math.max(0, d.time_left / Math.max(1, d.time_per_q));
+        document.getElementById('roomTimeFill').style.width = `${timeRatio * 100}%`;
+        
+        if(lastRenderedQIdx !== q.index){
+          lastRenderedQIdx = q.index;
+          roomAnsweredThisQ = false;
+          roomQuestionStartTime = Date.now();
+          document.getElementById('roomQText').textContent = q.question;
+          document.getElementById('roomWhyBox').style.display = 'none';
+          document.getElementById('roomMiniLeaderboard').style.display = 'none';
+          
+          const grid = document.getElementById('roomAnswersGrid');
+          grid.innerHTML = '';
+          q.choices.forEach(ch => {
+            const btn = document.createElement('button');
+            btn.className = 'answer-btn';
+            btn.textContent = ch;
+            btn.onclick = () => submitRoomAnswer(q.index, ch, btn);
+            grid.appendChild(btn);
+          });
+        }
+        
+        if(d.show_result){
+          document.getElementById('roomTimeLabel').textContent = 'Hết thời gian câu hỏi';
+          if(q.why){
+            document.getElementById('roomWhyBox').innerHTML = `<span class="why-icon">💡</span><span class="why-text">${q.why}</span>`;
+            document.getElementById('roomWhyBox').style.display = 'flex';
+          }
+          document.querySelectorAll('#roomAnswersGrid .answer-btn').forEach(btn => {
+            if(btn.textContent === q.answer) btn.classList.add('correct');
+            btn.disabled = true;
+          });
+          document.getElementById('roomMiniLeaderboard').style.display = 'block';
+          const lList = document.getElementById('roomMiniLeaderList');
+          lList.innerHTML = d.leaderboard.slice(0, 5).map((p, idx) => {
+            const isMe = currentUser && p.name === currentUser.username;
+            return `<div class="room-leader-row ${isMe ? 'me' : ''}">
+              <span>${idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '#' + (idx+1)} ${p.name}</span>
+              <span style="color:var(--amber)">${p.score.toLocaleString()} điểm</span>
+            </div>`;
+          }).join('');
+        }
+      }
+    } else if(d.status === 'finished'){
+      clearInterval(roomPollingInterval);
+      document.getElementById('roomLobbyView').style.display = 'none';
+      document.getElementById('roomActiveView').style.display = 'none';
+      document.getElementById('roomFinishedView').style.display = 'block';
+      
+      const myName = currentUser ? currentUser.username : (character ? character.name : '');
+      const myIdx = d.leaderboard.findIndex(p => p.name === myName);
+      const myRank = myIdx >= 0 ? myIdx + 1 : d.leaderboard.length;
+      const myScore = myIdx >= 0 ? d.leaderboard[myIdx].score : 0;
+      
+      document.getElementById('roomPodiumEmoji').textContent = myRank === 1 ? '🏆' : myRank === 2 ? '🥈' : myRank === 3 ? '🥉' : '🎖️';
+      document.getElementById('roomRankMsg').textContent = `Bạn xếp thứ ${myRank} / ${d.player_count} bạn trong lớp!`;
+      document.getElementById('roomFinalScore').textContent = `${myScore.toLocaleString()} điểm`;
+      
+      let xpAward = myRank === 1 ? 500 : myRank === 2 ? 350 : myRank === 3 ? 250 : 150;
+      let coinAward = myRank === 1 ? 50 : myRank === 2 ? 35 : myRank === 3 ? 25 : 15;
+      document.getElementById('roomRewardXp').textContent = `+${xpAward} XP`;
+      document.getElementById('roomRewardCoins').textContent = `+${coinAward} 🪙`;
+    }
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+async function submitRoomAnswer(qIdx, chosen, clickedBtn){
+  if(roomAnsweredThisQ) return;
+  roomAnsweredThisQ = true;
+  clickedBtn.style.borderColor = 'var(--amber)';
+  const timeSpent = (Date.now() - roomQuestionStartTime) / 1000;
+  const myName = currentUser ? currentUser.username : (character ? character.name : '');
+  
+  try {
+    const r = await fetch('/api/room/submit', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        code: currentRoomCode,
+        name: myName,
+        q_idx: qIdx,
+        answer: chosen,
+        time_spent: timeSpent
+      })
+    });
+    const d = await r.json();
+    if(d.ok){
+      clickedBtn.classList.add(d.correct ? 'correct' : 'wrong');
+      document.getElementById('roomScoreDisplay').textContent = d.total_score;
+      document.getElementById('roomStreakDisplay').textContent = d.streak;
+    }
+  } catch(e){
+    console.error(e);
+  }
+}
+
+function leaveRoom(){
+  if(roomPollingInterval) clearInterval(roomPollingInterval);
+  currentRoomCode = null;
+  showScreen('topicScreen');
+}
+
+function exitRoomToHome(){
+  currentRoomCode = null;
+  location.reload();
+}
+
+function backToNamePicker(){
+  document.getElementById('authStep2').style.display='none';
+  document.getElementById('authStep1').style.display='';
+  document.getElementById('playerName').value='';
+  const ps=document.getElementById('pickerSearch');
+  if(ps){ ps.value=''; filterPicker(''); }
+  document.getElementById('playerName').focus();
+}
+
+// ═══════════════════════════════════════════
+// LEVEL HELPERS
+// ═══════════════════════════════════════════
+function getLevelInfo(xp){ let i=LEVELS[0]; for(const l of LEVELS) if(xp>=l.xp) i=l; return i; }
+function levelTitle(info){ return lang==='es' ? (info.title_es||info.title) : info.title; }
+function getNextXp(xp){ for(const l of LEVELS) if(xp<l.xp) return l.xp; return null; }
+
+// ═══════════════════════════════════════════
+// API
+// ═══════════════════════════════════════════
+async function fetchSettings(){
+  try{ const r=await fetch('/api/settings'); return await r.json(); }
+  catch{ return Object.fromEntries(IM_UNITS.map(u=>[u.id,false])); }
+}
+async function loadCharacter(name){
+  try{ const r=await fetch(`/api/character/${encodeURIComponent(name)}`); return await r.json(); }
+  catch{ return {name,xp:0,level:1,items:[],rounds_played:0,new:true,unit_xp:{},week_xp:0,difficulty:2,coins:0,owned:[]}; }
+}
+async function saveReward(xp,items,unit){
+  const facedDifficulty = Math.min(session.facedDiff, myDifficulty);
+  try{
+    const r=await fetch(`/api/character/${encodeURIComponent(character.name)}/reward`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({xp,items,unit,lang,
+                           faced_difficulty:facedDifficulty, correct:session.correct,
+                           max_streak:session.maxStreak})
+    }); return await r.json();
+  } catch{ return null; }
+}
+// ═══════════════════════════════════════════
+// COSMETICS
+// ═══════════════════════════════════════════
+function applyCosmetics(cosmetics){
+  const themeId = cosmetics?.theme || 'arcane';
+  const theme   = THEMES[themeId] || THEMES.arcane;
+  const root    = document.documentElement;
+  for(const [k,v] of Object.entries(theme.vars)) root.style.setProperty(k,v);
+  document.body.style.backgroundImage = theme.bgImage;
+}
+
+function getAvatarEmoji(cosmetics, xp){
+  const avatarId = cosmetics?.avatar || 'auto';
+  if(avatarId !== 'auto'){
+    const av = AVATARS.find(a => a.id === avatarId);
+    if(av && av.emoji && xp >= av.xp) return av.emoji;
+  }
+  return getLevelInfo(xp).emoji;
+}
+
+// ═══════════════════════════════════════════
+// START & CHARACTER
+// ═══════════════════════════════════════════
+function notYou(){
+  localStorage.removeItem('mq_name');
+  character={name:'',xp:0,level:1,items:[],rounds_played:0,cosmetics:{},coins:0,owned:[]};
+  applyCosmetics({});
+  document.getElementById('playerName').value='';
+  document.getElementById('notYouBtn').style.display='none';
+  document.getElementById('savedAdventurerBox').style.display='none';
+  document.getElementById('newAdventurerForm').style.display='';
+  document.getElementById('authStep1').style.display='';
+  document.getElementById('authStep2').style.display='none';
+  showScreen('startScreen');
+}
+
+// ── Continue as saved adventurer (one-tap return) ─────────────
+async function continueQuest(){
+  const saved = localStorage.getItem('mq_name');
+  if(!saved){ showNewAdventurer(); return; }
+  // If already loaded in memory, just navigate
+  if(character.name === saved){
+    renderCharacterScreen(false);
+    document.getElementById('notYouBtn').style.display='block';
+    showScreen('characterScreen');
+    return;
+  }
+  // Load from server
+  const data = await loadCharacter(saved);
+  character  = {...data, name:saved};
+  applyCosmetics(character.cosmetics);
+  localStorage.setItem('mq_name', saved);
+  renderCharacterScreen(false);
+  document.getElementById('notYouBtn').style.display='block';
+  showScreen('characterScreen');
+}
+
+// ── Show the new-adventurer name-entry form ───────────────────
+function showNewAdventurer(){
+  localStorage.removeItem('mq_name');
+  document.getElementById('savedAdventurerBox').style.display='none';
+  document.getElementById('newAdventurerForm').style.display='';
+  document.getElementById('authStep1').style.display='';
+  document.getElementById('authStep2').style.display='none';
+  document.getElementById('playerName').value='';
+  document.getElementById('playerName').focus();
+}
+
+function renderCharacterScreen(isNew){
+  const info=getLevelInfo(character.xp), nextXp=getNextXp(character.xp);
+  const pct=nextXp?Math.round(((character.xp-info.xp)/(nextXp-info.xp))*100):100;
+  document.getElementById('charHeroEmoji').textContent  = getAvatarEmoji(character.cosmetics,character.xp);
+  document.getElementById('welcomeMsg').textContent     = isNew ? t('welcome_new') : t('welcome_back',{name:character.name});
+  document.getElementById('charTitle').textContent      = levelTitle(info);
+  document.getElementById('charLevelLabel').textContent = t('level_label',{n:info.level});
+  document.getElementById('charXpCurrent').textContent  = character.xp;
+  document.getElementById('charXpNext').textContent     = nextXp??'—';
+  document.getElementById('charXpBar').style.width      = pct+'%';
+  document.getElementById('topicSub').textContent       = t('topic_sub',{name:character.name});
+  // Power-up badge
+  const puBadge=document.getElementById('charPowerupBadge');
+  if(equippedItem && ITEMS[equippedItem.key]){
+    const it=ITEMS[equippedItem.key], pw=ITEM_POWERS[equippedItem.key];
+    const label = lang==='es' ? (pw?.label_es||pw?.label||it.name) : (pw?.label||it.name);
+    document.getElementById('charPowerupText').textContent=`${it.emoji} ${label}${t('powerup_ready_sfx')}`;
+    puBadge.style.display='flex';
+  } else { puBadge.style.display='none'; }
+  const preview=document.getElementById('charItemsPreview');
+  preview.innerHTML='';
+  const recent=character.items.slice(-4);
+  const offset=character.items.length-recent.length;
+  if(recent.length) recent.forEach((k,i)=>preview.appendChild(buildItemCard(k, true, offset+i)));
+  else preview.innerHTML=`<span style="color:var(--muted);font-size:.82rem;font-weight:700">${t('no_items_yet')}</span>`;
+}
+
+// ═══════════════════════════════════════════
+// TOPIC SCREEN — dynamic from settings
+// ═══════════════════════════════════════════
+async function showShop(){
+  showScreen('shopScreen');
+  await renderShop();
+}
+
+async function renderShop(){
+  const body = document.getElementById('shopBody');
+  body.innerHTML = `<div class="guild-empty">${t('guild_loading')}</div>`;
+  let data;
+  try{
+    const r = await fetch(`/api/character/${encodeURIComponent(character.name)}/shop`);
+    data = await r.json();
+  }catch{ body.innerHTML = `<div class="guild-empty">${t('shop_offline')}</div>`; return; }
+  character.coins = data.coins;
+  character.owned = data.skins.filter(k=>k.owned).map(k=>k.id);
+  document.getElementById('shopSub').innerHTML = t('shop_sub',{coins:data.coins});
+
+  const card = k => `
+    <div class="shop-card ${k.owned?'owned':''} ${k.featured?'featured':''}"
+         style="--rc:${RARITY_COLOR[k.rarity]}" data-type="${k.type}" data-id="${k.id}">
+      ${k.featured && !k.owned ? `<div class="shop-flag">${t('shop_featured_tag')}</div>` : ''}
+      <div class="shop-emoji">${k.emoji || '🧑'}</div>
+      <div class="shop-name">${lang==='es'?(k.name_es||k.name):k.name}</div>
+      <div class="shop-rarity">${t('rarity_'+k.rarity)}</div>
+      <div class="shop-price">${k.owned ? '✓ '+t('wc_owned') : k.price+' 🪙'}</div>
+    </div>`;
+
+  const featured = data.skins.filter(k=>k.featured);
+  const groups = ['avatar','theme','frame'].map(typ=>{
+    const list = data.skins.filter(k=>k.type===typ && !k.featured);
+    return `<div class="shop-group-hdr">${t('shop_'+typ)}</div>
+            <div class="shop-grid">${list.map(card).join('')}</div>`;
+  }).join('');
+
+  body.innerHTML = `
+    <div class="shop-group-hdr shop-hot">${t('shop_featured')}</div>
+    <div class="shop-grid">${featured.map(card).join('')}</div>
+    ${groups}`;
+
+  body.querySelectorAll('.shop-card:not(.owned)').forEach(el=>{
+    el.onclick = () => buySkin(el.dataset.type, el.dataset.id);
+  });
+}
+
+async function buySkin(type, id){
+  try{
+    const r = await fetch(`/api/character/${encodeURIComponent(character.name)}/buy`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({type, id})
+    });
+    const d = await r.json();
+    if(d.ok){
+      character.coins = d.coins;
+      character.owned = d.owned;
+      showToast(t('shop_bought',{name:(lang==='es'?SKIN_BY_TYPE[type][id].name_es:SKIN_BY_TYPE[type][id].name)}));
+      await equipItem(type, id);      // wear it straight away — that is the point
+      await renderShop();
+    } else if(r.status===402){
+      showToast(t('shop_short',{n:d.price-d.coins}));
+    }
+  }catch{ showToast(t('shop_offline')); }
+}
+
+// The student picks how hard their own questions are. Harder levels pay more
+// XP and judge accuracy against what was attempted, so climbing is the better
+// play rather than a penalty — see DIFF_XP_MULT in app.py.
+function renderDiffPicker(grid){
+  const wrap = document.createElement('div');
+  wrap.className = 'diff-pick-wrap';
+  const mult = DIFF_BALANCE.xp_mult, top = DIFF_BALANCE.top_acc;
+  wrap.innerHTML = `
+    <div class="diff-pick-label">${t('diff_title')}</div>
+    <div class="diff-pick">
+      ${[0,1,2].map(d=>`
+        <button class="diff-pick-btn ${d===myDifficulty?'dp-on-'+d:''}" data-diff="${d}">
+          ${t('diff_'+d)}
+          <span class="dp-mult">${mult[d]}× XP</span>
+        </button>`).join('')}
+    </div>
+    <div class="diff-pick-note">${t('diff_note_'+myDifficulty)}
+      ${myDifficulty>0 ? '<br>'+t('diff_fair',{pct:Math.round(top[myDifficulty]*100)}) : ''}</div>`;
+  wrap.querySelectorAll('.diff-pick-btn').forEach(b=>{
+    b.onclick = () => pickDifficulty(parseInt(b.dataset.diff,10));
+  });
+  grid.appendChild(wrap);
+}
+
+async function pickDifficulty(level){
+  if(level===myDifficulty) return;
+  myDifficulty = level;
+  character.difficulty = level;          // optimistic: the picker responds at once
+  await renderTopicScreen();
+  try{
+    await fetch(`/api/character/${encodeURIComponent(character.name)}/difficulty`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({difficulty: level})
+    });
+  }catch{ /* keep the local choice; it will save on the next change */ }
+}
+
+// What this student keeps getting wrong. Used to badge topics and to weight
+// the 'mix' draw — steering, never forcing: they still choose.
+async function loadPractice(){
+  if(!character.name) return [];
+  try{
+    const r = await fetch(`/api/character/${encodeURIComponent(character.name)}/practice`);
+    const d = await r.json();
+    return Array.isArray(d.weak) ? d.weak : [];
+  }catch{ return []; }
+}
+
+async function renderTopicScreen(){
+  const settings     = await fetchSettings();
+  const mapOverride  = equippedItem?.key === 'treasure_map';
+  enabledUnits       = mapOverride
+    ? IM_UNITS.map(u => u.id)                              // all units unlocked by the map
+    : IM_UNITS.filter(u => settings[u.id] === true).map(u => u.id);
+  const grid         = document.getElementById('topicsGrid');
+  grid.innerHTML     = '';
+  myDifficulty       = character.difficulty ?? 2;
+  practiceWeak       = await loadPractice();
+  renderDiffPicker(grid);
+
+  if(mapOverride){
+    const banner = document.createElement('div');
+    banner.style.cssText = 'grid-column:1/-1;text-align:center;padding:10px 14px;border-radius:var(--radius);background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.35);font-size:.8rem;font-weight:800;color:#fbbf24;margin-bottom:2px';
+    banner.textContent   = '🗺️ Treasure Map — pick any unit!';
+    grid.appendChild(banner);
+  } else if(!enabledUnits.length){
+    grid.innerHTML=`<div class="no-modules">${t('topic_locked').replace('\n','<br>')}</div>`;
+    return;
+  }
+
+  // Group enabled sub-topics by parent unit, preserving UNIT_GROUPS order
+  UNIT_GROUPS.forEach(grp=>{
+    const subs=enabledUnits.map(uid=>IM_UNITS.find(x=>x.id===uid)).filter(u=>u&&u.parent===grp.id);
+    if(!subs.length) return;
+    const hdr=document.createElement('div');
+    hdr.className='unit-group-hdr';
+    const grpName = lang==='en' ? (grp.name_en||grp.name) : grp.name;
+    hdr.innerHTML=`<span style="font-size:1rem">${grp.icon}</span><span class="ug-num">${t('unit_label')} ${grp.num}</span><span class="ug-name" style="color:${grp.color}">${grpName}</span>`;
+    grid.appendChild(hdr);
+    subs.forEach(u=>{
+      const card=document.createElement('div');
+      card.className='topic-card';
+      card.style.cssText=`--tc:${u.color}`;
+      const uName = lang==='en' ? (u.name_en||u.name) : u.name;
+      const uDesc = lang==='en' ? (u.desc_en||u.desc) : u.desc;
+      const needsWork = practiceWeak.includes(u.id);
+      if(needsWork) card.classList.add('tc-practice');
+      card.innerHTML=`
+        <span class="tc-icon">${u.icon}</span>
+        ${needsWork ? `<div class="tc-flag">${t('practice_flag')}</div>` : ''}
+        <div class="tc-name" style="color:${u.color}">${uName}</div>
+        <div class="tc-desc">${uDesc}</div>`;
+      card.addEventListener('mouseenter',()=>{ card.style.borderColor=u.color; card.style.boxShadow=`0 8px 28px ${u.color}40`; });
+      card.addEventListener('mouseleave',()=>{ card.style.borderColor=''; card.style.boxShadow=''; });
+      card.onclick=()=>selectTopic(u.id);
+      grid.appendChild(card);
+    });
+  });
+
+  if(enabledUnits.length>1){
+    const mix=document.createElement('div');
+    mix.className='topic-card topic-card-mix';
+    mix.style.cssText='border-color:rgba(245,158,11,.25)';
+    mix.innerHTML=`<span class="tc-icon">🎲</span><div><div class="tc-name" style="color:#f59e0b">${t('mix_name')}</div><div class="tc-desc">${t('mix_desc')}</div></div>`;
+    mix.addEventListener('mouseenter',()=>{ mix.style.borderColor='#f59e0b'; mix.style.boxShadow='0 8px 28px rgba(245,158,11,.28)'; });
+    mix.addEventListener('mouseleave',()=>{ mix.style.borderColor='rgba(245,158,11,.25)'; mix.style.boxShadow=''; });
+    mix.onclick=()=>selectTopic('mix');
+    grid.appendChild(mix);
+  }
+}
+
+// ═══════════════════════════════════════════
+{% include '_explanations.js' %}
+{% include '_generators.js' %}
+
+// ═══════════════════════════════════════════
+// GAME LOGIC
+// ═══════════════════════════════════════════
+// ─── Activate a power-up for this round ──────────────────────
+function activatePowerup(key){
+  powerup = {};
+  if(!key) return;
+  powerup.key = key;
+  switch(key){
+    case 'health_potion':  powerup.streakShield=true;          break;
+    case 'gold_coin':      powerup.bonusXp=ITEM_XP.gold_coin;         break;
+    case 'trail_bread':    powerup.startStreak=2;              break;
+    case 'firewood':       powerup.firstEasy=true;             break;
+    case 'adventure_pack': powerup.extraItems=2;               break;
+    case 'rope':           powerup.skipAvail=true;             break;
+    case 'iron_sword':     powerup.hardXpDouble=true;          break;
+    case 'wooden_shield':  powerup.autoEliminate=true;         break;
+    case 'wizard_hat':     powerup.eliminate2=true;            break;
+    case 'spell_book':     powerup.revealAvail=true;           break;
+    case 'compass':        powerup.allEasy=true;               break;
+    case 'magic_wand':     powerup.streakMultDouble=true;      break;
+    case 'lantern':        powerup.spotlightAvail=true;        break;
+    case 'leather_helm':   powerup.streakLocked=true;          break;
+    case 'crystal_orb':    powerup.xpMult=2;                   break;
+    case 'silver_crown':   powerup.bonusXp=ITEM_XP.silver_crown;      break;
+    case 'steel_sword':    powerup.steelSword=true;            break;
+    case 'magic_gem':      powerup.xpPerCorrect=ITEM_XP.magic_gem;    break;
+    case 'treasure_map':   powerup.anyTopic=true;              break;
+    case 'iron_armor':     powerup.streakLocked=true; powerup.startStreak=1; break;
+    case 'dragon_scale':   powerup.xpMult=3;                   break;
+    case 'star_fragment':  powerup.bonusXp=ITEM_XP.star_fragment;     break;
+    case 'mystic_amulet':  powerup.guaranteedLegendary=true;   break;
+    case 'enchanted_helm': powerup.perfectItems=true;          break;
+  }
+}
+
+function selectTopic(topic){
+  // Consume equipped item
+  const equipped = equippedItem;
+  equippedItem = null;
+  const key = equipped?.key;
+  activatePowerup(key);
+  if(key){
+    // Remove the specific slot that was equipped (not just the first occurrence of that key)
+    const slotIdx = equipped.idx;
+    if(slotIdx != null && character.items[slotIdx] === key){
+      character.items.splice(slotIdx, 1);
+    } else {
+      const fallback = character.items.indexOf(key);
+      if(fallback !== -1) character.items.splice(fallback, 1);
+    }
+    fetch(`/api/character/${encodeURIComponent(character.name)}/use_item`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({key})
+    }).catch(()=>{});
+  }
+  const initStreak = powerup.startStreak || 0;
+  session={topic, streak:initStreak, maxStreak:initStreak, qIndex:0, correct:0, xpEarned:0, newItems:[], retry:[], facedDiff:0};
+  showScreen('gameScreen');
+  updateActivePowerupPill();
+  loadQ();
+}
+
+function advanceQ(){
+  document.getElementById('nextBtn').style.display='none';
+  session.qIndex++; loadQ();
+}
+function loadQ(){
+  if(session.qIndex>=10){ finishRound(); return; }
+  answered=false;
+  hideWhy();
+  document.getElementById('nextBtn').style.display='none';
+  let diff = Math.min(DIFF_SCHEDULE[session.qIndex], myDifficulty);
+  if(powerup.allEasy)                             diff = 0;
+  if(powerup.firstEasy && session.qIndex===0)     diff = 0;
+
+  // Second look: a question they missed earlier comes back near the end of the
+  // round, after they have read the explanation. Reading why and then never
+  // meeting the idea again is what made misses cost nothing.
+  const retry = session.qIndex >= 8 ? session.retry.shift() : null;
+  if(retry){
+    currentQ      = retry;
+    currentQ._retry = true;
+    diff          = currentQ._diff ?? diff;
+  } else {
+    currentQ = genQ(session.topic, diff);
+    currentQ._retry = false;
+  }
+  currentQ._diff=diff;
+  currentQ._assisted = !!powerup.autoEliminate;   // help applied before they look
+  // A round is rewarded for the difficulty actually faced, not the level
+  // selected. Compass drops every question to easy, so without this a student
+  // could take the hard multiplier while answering easy questions.
+  session.facedDiff = Math.max(session.facedDiff, diff);
+  document.getElementById('qNum').textContent           = session.qIndex+1;
+  document.getElementById('qLabel').innerHTML           = t('q_of',{n:`<span id="qNum">${session.qIndex+1}</span>`});
+  document.getElementById('qText').innerHTML            = applyVocabBridge(currentQ[lang] || currentQ.en || currentQ.question || '');
+  document.getElementById('xpDisplay').textContent      = session.xpEarned;
+  document.getElementById('streakDisplay').textContent  = session.streak;
+  document.getElementById('progressFill').style.width   = (session.qIndex/10*100)+'%';
+  const badge=document.getElementById('diffBadge');
+  badge.textContent=t('diff_'+diff); badge.className='diff-badge '+DIFF_CLASSES[diff];
+  // Domain badge (CMAS reporting category)
+  const retryBadge=document.getElementById('retryBadge');
+  if(retryBadge) retryBadge.style.display = currentQ._retry ? '' : 'none';
+  const domBadge=document.getElementById('domainBadge');
+  if(currentQ.domain && CMAS_DOMAINS[currentQ.domain]){
+    domBadge.textContent=CMAS_DOMAINS[currentQ.domain];
+    domBadge.style.display='';
+  } else {
+    domBadge.style.display='none';
+  }
+  const grid=document.getElementById('answersGrid');
+  grid.innerHTML='';
+  if(currentQ.type==='ms'){
+    // ── Multi-select: checkboxes + Submit ──
+    const prompt=document.createElement('div');
+    prompt.className='ms-prompt';
+    prompt.textContent='Select ALL that apply — then tap Submit';
+    grid.appendChild(prompt);
+    const opts=document.createElement('div');
+    opts.className='ms-options';
+    currentQ.choices.forEach(ch=>{
+      const lbl=document.createElement('label');
+      lbl.className='ms-option';
+      const cb=document.createElement('input');
+      cb.type='checkbox'; cb.className='ms-cb'; cb.value=ch;
+      cb.addEventListener('change',()=>lbl.classList.toggle('ms-sel',cb.checked));
+      const span=document.createElement('span');
+      span.innerHTML=applyVocabBridge(ch);
+      lbl.appendChild(cb); lbl.appendChild(span);
+      opts.appendChild(lbl);
+    });
+    grid.appendChild(opts);
+    const row=document.createElement('div');
+    row.className='ms-submit-row';
+    const sub=document.createElement('button');
+    sub.className='btn btn-primary btn-sm'; sub.id='msSubmitBtn';
+    sub.textContent='Submit';
+    sub.onclick=()=>checkAnsMS(diff);
+    row.appendChild(sub);
+    grid.appendChild(row);
+  } else if(currentQ.type==='sa'){
+    // ── Short answer: text input + Submit ──
+    const wrap=document.createElement('div');
+    wrap.className='sa-wrap';
+    const hint=document.createElement('div');
+    hint.className='sa-hint';
+    hint.textContent='Type your answer — fractions like 1/2 are OK';
+    wrap.appendChild(hint);
+    const row=document.createElement('div');
+    row.className='sa-row';
+    const inp=document.createElement('input');
+    inp.type='text'; inp.className='sa-input'; inp.id='saInput';
+    inp.placeholder='Your answer…'; inp.autocomplete='off'; inp.autocorrect='off';
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter') checkAnsSA(diff);});
+    const sub=document.createElement('button');
+    sub.className='btn btn-primary'; sub.id='saSubmitBtn';
+    sub.textContent='Submit';
+    sub.onclick=()=>checkAnsSA(diff);
+    row.appendChild(inp); row.appendChild(sub);
+    wrap.appendChild(row);
+    const reveal=document.createElement('div');
+    reveal.className='sa-reveal'; reveal.id='saReveal';
+    wrap.appendChild(reveal);
+    grid.appendChild(wrap);
+    setTimeout(()=>inp.focus(),150);
+  } else {
+    // ── Multiple choice: existing behavior ──
+    const displayChoices = (lang==='es' && currentQ.choices_es) ? currentQ.choices_es : currentQ.choices;
+    displayChoices.forEach((ch,i)=>{
+      const canonical = currentQ.choices[i];
+      const btn=document.createElement('button');
+      btn.className='ans-btn';
+      btn.innerHTML = applyVocabBridge(ch);
+      btn.dataset.can=canonical;
+      btn.onclick=()=>checkAns(canonical,btn,diff);
+      grid.appendChild(btn);
+    });
+    if(powerup.autoEliminate){
+      const wrongBtns=[...document.querySelectorAll('.ans-btn')].filter(b=>b.dataset.can!==currentQ.answer);
+      if(wrongBtns.length){
+        const wb=wrongBtns[Math.floor(Math.random()*wrongBtns.length)];
+        wb.disabled=true; wb.style.opacity='0.22'; wb.style.textDecoration='line-through';
+      }
+    }
+  }
+  loadSkillButtons();
+}
+
+// A wrong answer is the moment a student is most ready to read why. Show the
+// worked line the generator attached, or the sub-topic strategy as a fallback.
+function showWhy(){
+  const box = document.getElementById('whyBox');
+  if(!box) return;
+  const txt = explanationFor(currentQ, lang);
+  if(!txt){ box.style.display='none'; return; }
+  box.innerHTML = `<span class="why-icon">💡</span><span class="why-text">${applyVocabBridge(txt)}</span>`;
+  box.style.display = '';
+}
+function hideWhy(){
+  const box = document.getElementById('whyBox');
+  if(box){ box.style.display='none'; box.innerHTML=''; }
+}
+
+// An item that narrows the choices has done part of the thinking, so the
+// question pays less. The item is still worth using — it protects the streak
+// and gets you past something hard — but it cannot be a free full-price answer.
+const ASSIST_XP_FACTOR = 0.5;
+function markAssisted(){ if(currentQ) currentQ._assisted = true; }
+
+// Shared XP/streak/reporting logic called by all three answer handlers
+function resolveAnswer(isRight, diff){
+  if(!isRight){
+    showWhy();
+    // Queue it for a second look later this round.
+    if(!currentQ._retry && session.retry.length < 2) session.retry.push(currentQ);
+  }
+  if(isRight){
+    session.correct++; session.streak++;
+    if(session.streak>session.maxStreak) session.maxStreak=session.streak;
+    let baseXp = DIFF_XP[diff];
+    if(powerup.hardXpDouble && diff===2) baseXp *= 2;
+    const rawMult = session.streak>=5?3:session.streak>=3?2:1;
+    const streakMult = powerup.streakMultDouble ? Math.min(rawMult*2,6)
+                     : powerup.steelSword       ? Math.max(rawMult,2)
+                     : rawMult;
+    let gain = baseXp * streakMult;
+    if(powerup.xpMult)        gain = Math.round(gain * powerup.xpMult);
+    if(powerup.xpPerCorrect)  gain += powerup.xpPerCorrect;
+    if(currentQ._assisted)    gain = Math.round(gain * ASSIST_XP_FACTOR);
+    session.xpEarned += gain;
+    if(streakMult>1){ const el=document.createElement('div'); el.className='mult-badge';
+      el.textContent=t('bonus_toast',{mult:streakMult}); document.body.appendChild(el); setTimeout(()=>el.remove(),2200); }
+    doConfetti();
+    const sp=document.getElementById('streakPill');
+    sp.classList.remove('bump'); void sp.offsetWidth; sp.classList.add('bump');
+  } else {
+    if(powerup.streakLocked){
+      showShieldFlash(t('shield_streak'));
+    } else if(powerup.streakShield && !powerup.streakShieldUsed){
+      powerup.streakShieldUsed = true;
+      showShieldFlash(t('shield_saved'));
+    } else {
+      session.streak = 0;
+    }
+  }
+  fetch('/api/question_result', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({unit: currentQ._unit, difficulty: ['easy','medium','hard'][diff],
+                          correct: isRight, name: character.name})
+  }).catch(()=>{});
+  document.getElementById('xpDisplay').textContent     = session.xpEarned;
+  document.getElementById('streakDisplay').textContent = session.streak;
+  document.getElementById('nextBtn').style.display='';
+}
+
+function checkAns(choice,btn,diff){
+  if(answered) return;
+  answered=true;
+  btn.blur();
+  const isRight=choice===currentQ.answer;
+  document.querySelectorAll('.ans-btn').forEach(b=>{
+    b.disabled=true;
+    if(b.dataset.can===currentQ.answer) b.classList.add('reveal');
+  });
+  if(isRight){ btn.classList.remove('reveal'); btn.classList.add('correct'); }
+  else        { btn.classList.remove('reveal'); btn.classList.add('wrong'); }
+  resolveAnswer(isRight, diff);
+}
+
+function checkAnsMS(diff){
+  if(answered) return;
+  const checked=[...document.querySelectorAll('.ms-cb:checked')].map(cb=>cb.value);
+  if(!checked.length) return; // require at least one selection
+  answered=true;
+  const picked =new Set(checked.map(String));
+  const correct=new Set(currentQ.answers.map(String));
+  const isRight=picked.size===correct.size&&[...picked].every(v=>correct.has(v));
+  document.querySelectorAll('.ms-cb').forEach(cb=>{
+    cb.disabled=true;
+    const lbl=cb.closest('.ms-option');
+    if(currentQ.answers.includes(cb.value)){ lbl.classList.remove('ms-sel'); lbl.classList.add('ms-correct'); }
+    else if(cb.checked){ lbl.classList.remove('ms-sel'); lbl.classList.add('ms-wrong'); }
+  });
+  const subBtn=document.getElementById('msSubmitBtn');
+  if(subBtn) subBtn.disabled=true;
+  resolveAnswer(isRight, diff);
+}
+
+function checkAnsSA(diff){
+  if(answered) return;
+  const inp=document.getElementById('saInput');
+  const val=(inp?.value||'').trim();
+  if(!val) return;
+  answered=true;
+  inp.disabled=true;
+  const subBtn=document.getElementById('saSubmitBtn');
+  if(subBtn) subBtn.disabled=true;
+  const isRight=numEq(val, currentQ.answer);
+  if(isRight){
+    inp.classList.add('sa-correct');
+  } else {
+    inp.classList.add('sa-wrong');
+    const reveal=document.getElementById('saReveal');
+    if(reveal){ reveal.textContent=`Correct answer: ${currentQ.answer}`; reveal.style.display='block'; }
+  }
+  resolveAnswer(isRight, diff);
+}
+
+// ═══════════════════════════════════════════
+// REWARD SYSTEM
+// ═══════════════════════════════════════════
+const randItem = r => pick(BY_RARITY[r]);
+
+function calcItems(){
+  const acc       = powerup.perfectItems ? 1.0 : session.correct/10;
+  const streakBonus = session.maxStreak>=5;
+  const milestone   = (character.rounds_played+1)%5===0;
+
+  // Bump rarity one tier when streak≥5 or every 5th round (cap at rare naturally)
+  function bumped(r){ const t=['common','uncommon','rare']; const i=t.indexOf(r); return t[Math.min(i+1,2)]; }
+
+  // Base rarity from accuracy, measured against the level the student chose —
+  // otherwise a strong 8/10 on hard questions loses to a coasted 10/10 on easy.
+  const band   = Math.min(session.facedDiff, myDifficulty);
+  const topAcc = DIFF_BALANCE.top_acc[band];
+  const midAcc = DIFF_BALANCE.mid_acc[band];
+  let base;
+  if      (acc>=topAcc) base='rare';
+  else if (acc>=midAcc) base='uncommon';
+  else                  base='common';
+
+  const r1 = (streakBonus||milestone) ? bumped(base) : base;
+  const items=[randItem(r1)];
+
+  // A top round for your level earns a second item (one tier below the first)
+  if(acc>=topAcc){
+    const r2 = (streakBonus||milestone) ? 'rare' : 'uncommon';
+    items.push(randItem(r2));
+  }
+
+  // Power-ups
+  if(powerup.extraItems) for(let i=0;i<powerup.extraItems;i++) items.push(randItem('common'));
+  if(powerup.guaranteedLegendary) items.push(randItem('legendary'));
+  return items;
+}
+
+async function finishRound(){
+  session.newItems=calcItems();
+  session.xpEarned += 30;                                   // finishing bonus
+  // A "top round" is judged against the level you actually chose: 10/10 on easy
+  // only, but 8/10 on the full ramp.
+  const facedBand = Math.min(session.facedDiff, myDifficulty);
+  if(session.correct/10 >= DIFF_BALANCE.top_acc[facedBand]) session.xpEarned += 100;
+  // Harder levels pay more. Flat item bonuses are added afterwards so they are
+  // never multiplied — those items promise an exact number on the label.
+  session.xpEarned = Math.round(session.xpEarned * DIFF_BALANCE.xp_mult[facedBand]);
+  if(powerup.bonusXp) session.xpEarned += powerup.bonusXp;
+  powerup = {};  // clear effects after round
+  session.prevLevel=getLevelInfo(character.xp).level;
+  const saved=await saveReward(session.xpEarned,session.newItems,session.topic);
+  if(saved){ character.xp=saved.xp; character.level=saved.level; character.items=saved.items;
+    if(saved.coins!==undefined){ character.coins=saved.coins; session.coinsEarned=saved.coins_earned; } character.rounds_played++; if(saved.unit_xp) character.unit_xp=saved.unit_xp; if(saved.unit_rounds) character.unit_rounds=saved.unit_rounds; }
+  else { character.xp+=session.xpEarned; character.items=[...character.items,...session.newItems]; character.rounds_played++; character.level=getLevelInfo(character.xp).level; }
+  renderRewardScreen(session.prevLevel);
+  showScreen('rewardScreen');
+}
+
+function renderRewardScreen(prevLevel){
+  const info=getLevelInfo(character.xp),nextXp=getNextXp(character.xp);
+  const pct=nextXp?Math.round(((character.xp-info.xp)/(nextXp-info.xp))*100):100;
+  document.getElementById('rewardXP').textContent       = `+${session.xpEarned} XP`;
+  document.getElementById('rewardXpCurrent').textContent= character.xp;
+  document.getElementById('rewardXpNext').textContent   = nextXp??'—';
+  document.getElementById('rewardXpBar').style.width    = '0%';
+  setTimeout(()=>{ document.getElementById('rewardXpBar').style.width=pct+'%'; },100);
+  const banner=document.getElementById('levelupBanner');
+  if(info.level>prevLevel){
+    banner.style.display='block';
+    document.getElementById('levelupSub').textContent=t('level_up_sub',{emoji:info.emoji, title:levelTitle(info)});
+    doConfetti(); setTimeout(doConfetti,400);
+  } else { banner.style.display='none'; }
+  const container=document.getElementById('rewardItems');
+  container.innerHTML='';
+  const lbl=document.getElementById('foundLabel');
+  if(session.newItems.length){
+    lbl.style.display='block';
+    session.newItems.forEach((k,i)=>{ const c=buildItemCard(k); c.style.animationDelay=`${i*120+300}ms`; c.classList.add('reveal-in'); container.appendChild(c); });
+  } else { lbl.style.display='none'; }
+}
+
+// ═══════════════════════════════════════════
+// INVENTORY
+// ═══════════════════════════════════════════
+function renderInventory(){
+  const info=getLevelInfo(character.xp),nextXp=getNextXp(character.xp);
+  const pct=nextXp?Math.round(((character.xp-info.xp)/(nextXp-info.xp))*100):100;
+  document.getElementById('invHeroEmoji').textContent = getAvatarEmoji(character.cosmetics,character.xp);
+  document.getElementById('invTitle').textContent     = levelTitle(info);
+  document.getElementById('invLevel').textContent     = `${t('level_label',{n:info.level})} · ${character.xp} XP`;
+  document.getElementById('invXpCurrent').textContent = character.xp;
+  document.getElementById('invXpNext').textContent    = nextXp??'MAX';
+  document.getElementById('invXpBar').style.width     = pct+'%';
+  const content=document.getElementById('invContent');
+  content.innerHTML='';
+
+  // Show equipped power-up slot at top
+  if(equippedItem && ITEMS[equippedItem.key]){
+    const item=ITEMS[equippedItem.key], power=ITEM_POWERS[equippedItem.key];
+    const slotTitle=document.createElement('div'); slotTitle.className='inv-section-title';
+    slotTitle.textContent=t('powerup_title');
+    content.appendChild(slotTitle);
+    const slot=document.createElement('div');
+    slot.style.cssText='background:linear-gradient(135deg,rgba(245,158,11,.18),rgba(168,85,247,.12));border:2px solid rgba(245,158,11,.5);border-radius:var(--radius);padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:4px';
+    const itemName = lang==='es' ? (item.name_es||item.name) : item.name;
+    const pwrLabel = lang==='es' ? (power?.label_es||power?.label||'') : (power?.label||'');
+    const pwrDesc  = lang==='es' ? (power?.desc_es ||power?.desc ||'') : (power?.desc ||'');
+    slot.innerHTML=`<div style="font-size:2.4rem">${item.emoji}</div>
+      <div style="flex:1">
+        <div style="font-weight:800;font-size:.95rem">${itemName}</div>
+        <div style="font-size:.76rem;color:#f59e0b;font-weight:800;margin-top:2px">${pwrLabel}</div>
+        <div style="font-size:.7rem;color:var(--muted);font-weight:700;margin-top:2px">${pwrDesc}</div>
+      </div>
+      <button onclick="unequipPowerup()" style="background:none;border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:6px 10px;color:var(--muted);font-size:.7rem;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;flex-shrink:0">${t('btn_unequip')}</button>`;
+    content.appendChild(slot);
+  } else {
+    const hint=document.createElement('div'); hint.className='inv-section-title';
+    hint.textContent=t('powerup_hint');
+    content.appendChild(hint);
+    const emptySlot=document.createElement('div');
+    emptySlot.style.cssText='border:2px dashed rgba(255,255,255,.12);border-radius:var(--radius);padding:14px;text-align:center;color:var(--muted);font-size:.82rem;font-weight:700;margin-bottom:4px';
+    emptySlot.textContent=t('powerup_empty');
+    content.appendChild(emptySlot);
+  }
+
+  if(!character.items.length){ content.innerHTML+=`<div class="inv-empty" style="margin-top:20px">${t('bag_empty').replace('\n','<br>')}</div>`; return; }
+  const order=['legendary','rare','uncommon','common'], byR={};
+  // Track each item with its original index so equip state is per-slot, not per-type
+  for(let i=0;i<character.items.length;i++){
+    const k=character.items[i]; const r=ITEMS[k]?.rarity||'common';
+    (byR[r]=byR[r]||[]).push({key:k, idx:i});
+  }
+  for(const r of order){
+    if(!byR[r]?.length) continue;
+    const title=document.createElement('div'); title.className='inv-section-title';
+    title.textContent=t(`r_${r}`);
+    content.appendChild(title);
+    const grid=document.createElement('div'); grid.className='inv-grid';
+    for(const {key:k, idx} of byR[r]) grid.appendChild(buildItemCard(k, true, idx));
+    content.appendChild(grid);
+  }
+}
+
+// ═══════════════════════════════════════════
+// GUILD HALL
+// ═══════════════════════════════════════════
+let guildView = 'alltime';
+let guildUnit = '';
+
+async function loadGuild(view='alltime', unit=''){
+  let url = `/api/guild?view=${view}`;
+  if(unit) url += `&unit=${unit}`;
+  try{ const r=await fetch(url); return await r.json(); }
+  catch{ return []; }
+}
+
+function buildUnitPicker(){
+  const picker = document.getElementById('unitPicker');
+  picker.innerHTML = '';
+  UNIT_GROUPS.forEach(grp => {
+    const btn = document.createElement('button');
+    btn.className = 'upick' + (grp.id === guildUnit ? ' active' : '');
+    btn.innerHTML = `${grp.icon} ${grp.num}`;
+    btn.title = lang==='es' ? (grp.name_es||grp.name) : grp.name;
+    btn.style.borderColor = grp.id === guildUnit ? grp.color : '';
+    btn.style.color       = grp.id === guildUnit ? grp.color : '';
+    btn.onclick = () => pickGuildUnit(grp.id, grp.color);
+    picker.appendChild(btn);
+  });
+}
+
+async function pickGuildUnit(uid, color){
+  guildUnit = uid;
+  document.querySelectorAll('.upick').forEach((b,i) => {
+    const grp = UNIT_GROUPS[i];
+    b.classList.toggle('active', grp.id === uid);
+    b.style.borderColor = grp.id === uid ? grp.color : '';
+    b.style.color       = grp.id === uid ? grp.color : '';
+  });
+  await renderGuildList();
+}
+
+function switchGuild(view){
+  guildView = view;
+  if(view !== 'topic') guildUnit = '';
+  document.querySelectorAll('.gtab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`gtab-${view}`)?.classList.add('active');
+  const picker = document.getElementById('unitPicker');
+  if(view === 'topic'){
+    picker.style.display = 'flex';
+    buildUnitPicker();
+  } else {
+    picker.style.display = 'none';
+  }
+  renderGuildList();
+}
+
+async function renderGuildList(){
+  const list = document.getElementById('guildList');
+  if(guildView === 'topic' && !guildUnit){
+    list.innerHTML = `<div class="guild-empty">${t('guild_pick_unit')}</div>`;
+    return;
+  }
+  list.innerHTML = `<div class="guild-empty">${t('guild_loading')}</div>`;
+  const guild = await loadGuild(guildView, guildUnit);
+
+  if(!guild.length){
+    const msgs = {
+      alltime:  t('guild_empty_alltime'),
+      weekly:   t('guild_empty_weekly'),
+      improved: t('guild_empty_improved'),
+      topic:    t('guild_empty_topic'),
+      streak:   t('guild_empty_streak'),
+      collection: t('guild_empty_collection'),
+      mastery:  t('guild_empty_mastery'),
+    };
+    list.innerHTML = `<div class="guild-empty">${msgs[guildView]||'No data yet.'}</div>`;
+    return;
+  }
+
+  const medals = ['🥇','🥈','🥉'];
+  // guildUnit is a parent unit id ('u1'..'u9') from UNIT_GROUPS, not a sub-topic
+  // id ('u1a'). Looking it up in IM_UNITS never matched, so every topic board
+  // fell back to the placeholder icon and the literal word "unit".
+  const topicUnit = UNIT_GROUPS.find(u => u.id === guildUnit);
+
+  list.innerHTML = guild.map((g,i) => {
+    const info        = getLevelInfo(g.xp);
+    const frameId     = g.cosmetics?.frame || 'none';
+    const frameClass  = frameId !== 'none' ? `frame-${frameId}` : '';
+    const avatarEmoji = getAvatarEmoji(g.cosmetics, g.xp);
+    let meta = '';
+    const topicName = topicUnit ? (lang==='es'?(topicUnit.name_es||topicUnit.name):topicUnit.name) : 'unit';
+    if(guildView === 'weekly')
+      meta = `<div class="guild-meta">${t('guild_meta_weekly',{score:g.score})}</div>`;
+    else if(guildView === 'improved')
+      meta = `<div class="guild-meta">${t('guild_meta_improved',{score:g.score})}</div>`;
+    else if(guildView === 'streak')
+      meta = `<div class="guild-meta">${t('guild_meta_streak',{score:g.score})}</div>`;
+    else if(guildView === 'collection')
+      meta = `<div class="guild-meta">${t('guild_meta_collection',{score:g.score})}</div>`;
+    else if(guildView === 'mastery')
+      meta = `<div class="guild-meta">${t('guild_meta_mastery',{score:g.score})}</div>`;
+    else if(guildView === 'topic')
+      meta = `<div class="guild-meta">${escHtml(t('guild_meta_topic',{icon:topicUnit?.icon||'📚',score:g.score,name:topicName}))}</div>`;
+    else
+      meta = `<div class="guild-meta">${t('guild_meta_alltime',{level:info.level,items:g.item_count,rounds:g.rounds})}</div>`;
+    return `
+      <div class="guild-card ${frameClass}" data-gname="${escHtml(g.name)}">
+        <div class="guild-rank">${medals[i]||'·'}</div>
+        <div class="guild-emoji">${avatarEmoji}</div>
+        <div class="guild-info">
+          <div class="guild-name">${escHtml(g.name)}</div>
+          <div class="guild-title">${escHtml(levelTitle(info))}</div>
+          ${meta}
+        </div>
+        ${g.rarest_skin?`<div class="guild-skin rar-${g.rarest_skin.rarity}" title="${escHtml(lang==='es'?(g.rarest_skin.name_es||g.rarest_skin.name):g.rarest_skin.name)}">${g.rarest_skin.emoji||''}</div>`:''}
+        ${g.rarest?`<div class="guild-rarest" title="${escHtml(g.rarest.name)}">${g.rarest.emoji}</div>`:''}
+      </div>`;
+  }).join('');
+
+  // Highlight the current player's row after render
+  const myName = (character.name || localStorage.getItem('mq_name') || '').trim();
+  if(myName){
+    list.querySelectorAll('.guild-card').forEach(card => {
+      if(card.dataset.gname === myName){
+        card.classList.add('guild-me');
+        const nameEl = card.querySelector('.guild-name');
+        if(nameEl && !nameEl.querySelector('.guild-me-badge')){
+          nameEl.insertAdjacentHTML('beforeend','<span class="guild-me-badge">YOU</span>');
+        }
+      }
+    });
+  }
+}
+
+async function showGuild(){
+  showScreen('guildScreen');
+  // Reset to all-time on each visit
+  guildView = 'alltime';
+  guildUnit = '';
+  document.querySelectorAll('.gtab').forEach(t => t.classList.remove('active'));
+  document.getElementById('gtab-alltime')?.classList.add('active');
+  document.getElementById('unitPicker').style.display = 'none';
+  await renderGuildList();
+}
+
+// ═══════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════
+function buildItemCard(key, interactive=false, itemIdx=null){
+  const item=ITEMS[key]; if(!item) return document.createElement('div');
+  const div=document.createElement('div');
+  div.className=`item-card r-${item.rarity}${interactive?' item-card-interactive':''}`;
+  // Equip highlight only when this exact inventory slot is the one staged
+  const isEquipped = itemIdx !== null && equippedItem?.idx === itemIdx;
+  if(isEquipped) div.style.cssText='border-color:#f59e0b!important;box-shadow:0 0 14px rgba(245,158,11,.45)';
+  const displayName = lang==='es' ? (item.name_es||item.name) : item.name;
+  const rarityChip  = t(`rc_${item.rarity}`);
+  div.innerHTML=`<div class="ie">${item.emoji}</div><div class="in">${displayName}</div>
+    <div class="ir">${rarityChip}</div>${isEquipped?`<div style="font-size:.55rem;font-weight:900;letter-spacing:.08em;color:#f59e0b;text-transform:uppercase;margin-top:1px">${t('equipped_tag')}</div>`:''}`;
+  if(interactive) div.onclick=()=>showItemModal(key, itemIdx);
+  return div;
+}
+function doConfetti(){
+  const container=document.getElementById('confetti');
+  const colors=['#ff6b35','#a855f7','#00d4aa','#4ade80','#f59e0b','#f472b6','#fff'];
+  for(let i=0;i<28;i++){
+    const p=document.createElement('div'); p.className='cp';
+    const sz=rand(7,14);
+    p.style.cssText=`left:${rand(5,95)}%;top:-14px;width:${sz}px;height:${sz}px;background:${pick(colors)};border-radius:${Math.random()>.5?'50%':'3px'};animation-delay:${rand(0,450)}ms;animation-duration:${rand(900,1500)}ms;`;
+    container.appendChild(p); setTimeout(()=>p.remove(),2000);
+  }
+}
+
+// ═══════════════════════════════════════════
+// POWER-UP SYSTEM
+// ═══════════════════════════════════════════
+function updateActivePowerupPill(){
+  const pill=document.getElementById('activePowerupPill');
+  if(!pill) return;
+  if(powerup.key && ITEMS[powerup.key]){
+    const it=ITEMS[powerup.key], pw=ITEM_POWERS[powerup.key];
+    const pillLabel = lang==='es' ? (pw?.label_es||pw?.label||it.name) : (pw?.label||it.name);
+    pill.innerHTML=`${it.emoji} <span>${pillLabel}</span>`;
+    pill.style.display='flex';
+  } else { pill.style.display='none'; }
+}
+
+function loadSkillButtons(){
+  const div=document.getElementById('skillButtons');
+  if(!div){ return; }
+  div.innerHTML='';
+  const isMC=!currentQ||!currentQ.type||currentQ.type==='mc';
+  if(powerup.skipAvail){
+    const b=document.createElement('button'); b.className='skill-btn skill-btn-green';
+    b.innerHTML=t('btn_skip');
+    b.onclick=()=>{ powerup.skipAvail=false; session.qIndex++; loadQ(); };
+    div.appendChild(b);
+  }
+  if(isMC && powerup.eliminate2){
+    const b=document.createElement('button'); b.className='skill-btn skill-btn-purple';
+    b.innerHTML=t('btn_fifty'); b.onclick=use50_50; div.appendChild(b);
+  }
+  if(isMC && powerup.revealAvail){
+    const b=document.createElement('button'); b.className='skill-btn skill-btn-amber';
+    b.innerHTML=t('btn_reveal'); b.onclick=()=>{ powerup.revealAvail=false; markAssisted(); useReveal(); loadSkillButtons(); };
+    div.appendChild(b);
+  }
+  if(isMC && powerup.spotlightAvail){
+    const b=document.createElement('button'); b.className='skill-btn skill-btn-amber';
+    b.innerHTML=t('btn_spotlight'); b.onclick=()=>{ powerup.spotlightAvail=false; markAssisted(); useSpotlight(); loadSkillButtons(); };
+    div.appendChild(b);
+  }
+}
+
+function use50_50(){
+  if(!powerup.eliminate2) return;
+  powerup.eliminate2=false;
+  markAssisted();
+  const wrongBtns=[...document.querySelectorAll('.ans-btn:not([disabled])')].filter(b=>b.dataset.can!==currentQ.answer);
+  wrongBtns.sort(()=>Math.random()-.5).slice(0,2).forEach(b=>{ b.disabled=true; b.style.opacity='0.18'; b.style.textDecoration='line-through'; });
+  loadSkillButtons();
+}
+
+function useReveal(){
+  document.querySelectorAll('.ans-btn').forEach(b=>{
+    if(b.dataset.can===currentQ.answer){ b.style.borderColor='rgba(74,222,128,.9)'; b.style.background='rgba(74,222,128,.15)'; }
+  });
+}
+
+function useSpotlight(){
+  // Dim all wrong answers so correct one stands out
+  document.querySelectorAll('.ans-btn').forEach(b=>{
+    if(b.dataset.can!==currentQ.answer){ b.style.opacity='0.3'; }
+  });
+}
+
+function showShieldFlash(msg){
+  const el=document.createElement('div');
+  el.style.cssText='position:fixed;top:22%;left:50%;transform:translateX(-50%);background:rgba(168,85,247,.92);color:#fff;font-family:"Fredoka One",cursive;font-size:1.1rem;padding:10px 22px;border-radius:100px;z-index:300;pointer-events:none;animation:multIn .3s ease,multOut .35s 1.7s ease forwards;white-space:nowrap';
+  el.textContent=msg; document.body.appendChild(el); setTimeout(()=>el.remove(),2200);
+}
+
+function showToast(msg){
+  const el=document.createElement('div');
+  el.className='equip-toast';
+  el.textContent=msg;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),2400);
+}
+
+function showEquipToast(key){
+  const item=ITEMS[key]; if(!item) return;
+  const el=document.createElement('div');
+  el.style.cssText='position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--card2);border:2px solid var(--accent);color:var(--text);font-family:"Nunito",sans-serif;font-weight:800;font-size:.88rem;padding:12px 22px;border-radius:100px;z-index:400;white-space:nowrap;animation:multIn .3s ease';
+  el.textContent=t('equip_toast',{emoji:item.emoji});
+  document.body.appendChild(el);
+  setTimeout(()=>{ el.style.animation='multOut .35s ease forwards'; setTimeout(()=>el.remove(),400); }, 2400);
+}
+
+// ── Item modal ──────────────────────────────────────────────
+function showItemModal(key, itemIdx=null){
+  const item=ITEMS[key], power=ITEM_POWERS[key]; if(!item) return;
+  const modal=document.getElementById('itemModal');
+  document.getElementById('modalEmoji').textContent  = item.emoji;
+  document.getElementById('modalName').textContent   = lang==='es' ? (item.name_es||item.name) : item.name;
+  const rarityEl=document.getElementById('modalRarity');
+  rarityEl.textContent = t(`rc_${item.rarity}`);
+  rarityEl.style.color = {legendary:'#f59e0b',rare:'#60a5fa',uncommon:'#4ade80',common:'var(--muted)'}[item.rarity];
+  if(power){
+    const lbl = lang==='es' ? (power.label_es||power.label) : power.label;
+    const dsc = lang==='es' ? (power.desc_es ||power.desc ) : power.desc;
+    document.getElementById('modalPowerLabel').textContent = '⚡ ' + lbl;
+    document.getElementById('modalPowerDesc').textContent  = dsc;
+    document.getElementById('modalPowerBlock').style.display='block';
+  } else {
+    document.getElementById('modalPowerBlock').style.display='none';
+  }
+  const equipBtn=document.getElementById('modalEquipBtn');
+  const alreadyMsg=document.getElementById('modalAlreadyMsg');
+  // "Already equipped" only when this exact inventory slot is staged
+  if(equippedItem && equippedItem.idx === itemIdx && itemIdx !== null){
+    alreadyMsg.textContent=t('modal_already'); alreadyMsg.style.display='block';
+    equipBtn.style.display='none';
+  } else if(equippedItem){
+    const old=ITEMS[equippedItem.key];
+    const oldName = lang==='es' ? (old?.name_es||old?.name||'Item') : (old?.name||'Item');
+    alreadyMsg.textContent=t('modal_replacing',{emoji:old?.emoji||'⚡',name:oldName}); alreadyMsg.style.display='block';
+    equipBtn.innerHTML=t('modal_replace'); equipBtn.style.display='flex'; equipBtn.onclick=()=>confirmEquipPowerup(key, itemIdx);
+  } else {
+    alreadyMsg.style.display='none';
+    equipBtn.innerHTML=t('modal_equip'); equipBtn.style.display='flex'; equipBtn.onclick=()=>confirmEquipPowerup(key, itemIdx);
+  }
+  modal.style.display='flex';
+}
+
+function closeItemModal(){ document.getElementById('itemModal').style.display='none'; }
+
+function confirmEquipPowerup(key, itemIdx=null){
+  closeItemModal();
+  equippedItem = {key, idx: itemIdx};
+  renderCharacterScreen(false);
+  renderInventory();
+  showEquipToast(key);
+}
+
+function unequipPowerup(){
+  equippedItem=null;
+  renderCharacterScreen(false);
+  renderInventory();
+}
+
+// ═══════════════════════════════════════════
+// MY PLAYER SCREEN
+// ═══════════════════════════════════════════
+async function showPlayerScreen(){
+  const settings = await fetchSettings();
+
+  // Hero
+  const lv     = getLevelInfo(character.xp);
+  const nextXp = getNextXp(character.xp);
+  const cs     = character.cosmetics || {};
+  document.getElementById('mpAvatar').textContent = getAvatarEmoji(cs, character.xp);
+  document.getElementById('mpName').textContent   = character.name;
+  document.getElementById('mpTitle').textContent  = levelTitle(lv);
+  document.getElementById('mpLvl').textContent    = t('level_label',{n:lv.level});
+
+  document.getElementById('mpXpLabel').textContent =
+    character.xp.toLocaleString() + ' XP total';
+
+  // Stats
+  document.getElementById('mpRounds').textContent  = character.rounds_played ?? 0;
+  document.getElementById('mpItems').textContent   = (character.items || []).length;
+  document.getElementById('mpWeekXp').textContent  = (character.week_xp ?? 0).toLocaleString();
+
+  // Units
+  const unitXp     = character.unit_xp     || {};
+  const unitRounds = character.unit_rounds  || {};
+  const box        = document.getElementById('mpUnits');
+  box.innerHTML    = '';
+  UNIT_GROUPS.forEach(grp => {
+    const xp      = unitXp[grp.id] || 0;
+    // sum any sub-topic xp keyed under sub-unit IDs too
+    const subXp   = IM_UNITS.filter(u=>u.parent===grp.id)
+                             .reduce((s,u)=>(unitXp[u.id]||0)+s, 0);
+    const totalXp  = xp + subXp;
+    const quests   = unitRounds[grp.id] || 0;
+    const hasData  = totalXp > 0 || quests > 0;
+
+    const div = document.createElement('div');
+    div.className = 'mp-unit';
+    div.innerHTML = `
+      <div class="mp-unit-top">
+        <span class="mp-unit-icon">${grp.icon}</span>
+        <span class="mp-unit-num">${t('unit_label')} ${grp.num}</span>
+        <span class="mp-unit-name" style="color:${grp.color}">${lang==='en'?(grp.name_en||grp.name):grp.name}</span>
+      </div>
+      ${hasData
+        ? `<div class="mp-unit-stats">
+             <span class="mp-unit-stat" style="color:${grp.color}">⭐ ${totalXp.toLocaleString()} XP</span>
+             <span class="mp-unit-stat">🗺️ ${quests} ván đấu</span>
+           </div>`
+        : `<div class="mp-unit-stats"><span class="mp-unit-stat">${t('mp_not_practiced')}</span></div>`
+      }`;
+    box.appendChild(div);
+  });
+
+  showScreen('playerScreen');
+}
+
+// ═══════════════════════════════════════════
+// WARDROBE
+// ═══════════════════════════════════════════
+let wardrobeTab = 'theme';
+
+function showWardrobe(){
+  wardrobeTab = 'theme';
+  document.querySelectorAll('[id^="wtab-"]').forEach(t=>t.classList.remove('active'));
+  document.getElementById('wtab-theme')?.classList.add('active');
+  renderWardrobeContent();
+  showScreen('wardrobeScreen');
+}
+
+function switchWardrobeTab(tab){
+  wardrobeTab = tab;
+  document.querySelectorAll('[id^="wtab-"]').forEach(t=>t.classList.remove('active'));
+  document.getElementById(`wtab-${tab}`)?.classList.add('active');
+  renderWardrobeContent();
+}
+
+function renderWardrobeContent(){
+  const el = document.getElementById('wardrobeContent');
+  if(wardrobeTab==='theme')       renderWardrobeThemes(el);
+  else if(wardrobeTab==='avatar') renderWardrobeAvatars(el);
+  else                            renderWardrobeFrames(el);
+}
+
+function _wcBadge(isEquipped, unlocked, xp){
+  if(isEquipped) return `<div class="wc-badge on">${t('wc_equipped')}</div>`;
+  if(unlocked)   return `<div class="wc-badge avail">${t('wc_equip')}</div>`;
+  return `<div class="wc-badge locked">${t('wc_in_shop')}</div>`;
+}
+
+function renderWardrobeThemes(el){
+  const equipped = character.cosmetics?.theme || 'arcane';
+  const cards = Object.entries(THEMES).map(([id,th]) => {
+    const skin      = SKIN_BY_TYPE.theme[id] || {price:0,rarity:'common'};
+    const unlocked  = ownsSkin(id);
+    const isEquipped = equipped === id;
+    const cls = `wardrobe-card ${unlocked?'unlocked':''} ${isEquipped?'equipped':''} ${!unlocked?'locked':''}`;
+    const fn  = unlocked && !isEquipped ? `equipItem('theme','${id}')` : '';
+    const thName = lang==='es' ? (th.name_es||th.name) : th.name;
+    return `<div class="${cls}" onclick="${fn}">
+      <div class="wc-preview" style="background:${th.vars['--card']};border:2px solid ${th.vars['--accent']}">${th.emoji}</div>
+      <div class="wc-name">${thName}</div>
+      <div class="wc-xp" style="color:${RARITY_COLOR[skin.rarity]}">${unlocked ? t('wc_owned') : skin.price+' 🪙'}</div>
+      ${_wcBadge(isEquipped, unlocked, skin.price)}
+    </div>`;
+  }).join('');
+  el.innerHTML = `<div class="wardrobe-grid">${cards}</div>`;
+}
+
+function renderWardrobeAvatars(el){
+  const equipped   = character.cosmetics?.avatar || 'auto';
+  const levelEmoji = getLevelInfo(character.xp).emoji;
+  const cards = AVATARS.map(a => {
+    const skin      = SKIN_BY_TYPE.avatar[a.id] || {price:0,rarity:'common'};
+    const unlocked  = ownsSkin(a.id);
+    const isEquipped = equipped === a.id;
+    const cls = `wardrobe-card ${unlocked?'unlocked':''} ${isEquipped?'equipped':''} ${!unlocked?'locked':''}`;
+    const fn  = unlocked && !isEquipped ? `equipItem('avatar','${a.id}')` : '';
+    const aName = lang==='es' ? (a.name_es||a.name) : a.name;
+    return `<div class="${cls}" onclick="${fn}">
+      <div class="wc-emoji">${a.emoji || levelEmoji}</div>
+      <div class="wc-name">${aName}</div>
+      <div class="wc-xp" style="color:${RARITY_COLOR[skin.rarity]}">${unlocked ? t('wc_owned') : skin.price+' 🪙'}</div>
+      ${_wcBadge(isEquipped, unlocked, skin.price)}
+    </div>`;
+  }).join('');
+  el.innerHTML = `<div class="wardrobe-grid">${cards}</div>`;
+}
+
+function renderWardrobeFrames(el){
+  const equipped = character.cosmetics?.frame || 'none';
+  const cards = FRAMES.map(f => {
+    const skin      = SKIN_BY_TYPE.frame[f.id] || {price:0,rarity:'common'};
+    const unlocked  = ownsSkin(f.id);
+    const isEquipped = equipped === f.id;
+    const cls   = `wardrobe-card ${unlocked?'unlocked':''} ${isEquipped?'equipped':''} ${!unlocked?'locked':''}`;
+    const fn    = unlocked && !isEquipped ? `equipItem('frame','${f.id}')` : '';
+    const fCls  = f.id !== 'none' ? `frame-${f.id}` : '';
+    const style = f.id === 'none' ? 'border:2px solid rgba(255,255,255,.12)' : 'border:2px solid rgba(255,255,255,.12)';
+    const fName = lang==='es' ? (f.name_es||f.name) : f.name;
+    return `<div class="${cls}" onclick="${fn}">
+      <div class="wc-preview ${fCls}" style="${style};border-radius:10px">${f.icon}</div>
+      <div class="wc-name">${fName}</div>
+      <div class="wc-xp" style="color:${RARITY_COLOR[skin.rarity]}">${unlocked ? t('wc_owned') : skin.price+' 🪙'}</div>
+      ${_wcBadge(isEquipped, unlocked, skin.price)}
+    </div>`;
+  }).join('');
+  el.innerHTML = `<div class="wardrobe-grid">${cards}</div>`;
+}
+
+async function equipItem(type, id){
+  try{
+    const r = await fetch(`/api/character/${encodeURIComponent(character.name)}/equip`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({type, id})
+    });
+    const data = await r.json();
+    if(data.ok){
+      character.cosmetics = data.cosmetics;
+      applyCosmetics(character.cosmetics);
+      renderWardrobeContent();           // refresh badges
+      renderCharacterScreen(false);      // update hero emoji on char screen too
+    }
+  } catch(e){ console.error('equip error',e); }
+}
+
+// ─── Auto-load from localStorage ─────────────────────────────
+fetchPlayers(); // populate picker in background for users without localStorage
+(async()=>{
+  const saved = localStorage.getItem('mq_name');
+  if(!saved) return;
+// ─── Unified Authentication On Load ─────────────────────────
+checkAuth();
+
+  // Immediately show the "Welcome back" card — no waiting for network.
+  // This means returning students NEVER see an empty name input.
+  document.getElementById('savedNameDisplay').textContent = saved;
+  document.getElementById('savedAdventurerBox').style.display = 'block';
+  document.getElementById('newAdventurerForm').style.display  = 'none';
+document.getElementById('loginUsername')?.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+document.getElementById('loginPassword')?.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+document.getElementById('regUsername')?.addEventListener('keydown', e => { if(e.key==='Enter') doRegister(); });
+document.getElementById('regPassword')?.addEventListener('keydown', e => { if(e.key==='Enter') doRegister(); });
+document.getElementById('roomCodeInput')?.addEventListener('keydown', e => { if(e.key==='Enter') submitRoomJoin(); });
+
+  // Try to advance straight to the character screen
+  const data = await loadCharacter(saved);
+  character  = {...data, name: saved};
+  applyCosmetics(character.cosmetics);
+  renderCharacterScreen(false);
+  document.getElementById('notYouBtn').style.display = 'block';
+  showScreen('characterScreen');
+})();
+
+document.getElementById('playerName').addEventListener('keydown',e=>{ if(e.key==='Enter') submitName(); });
+document.getElementById('pinInput').addEventListener('keydown',e=>{ if(e.key==='Enter') submitPin(); });
+document.getElementById('pinConfirm').addEventListener('keydown',e=>{ if(e.key==='Enter') submitPin(); });
+
+// Apply translations on load (handles saved language preference)
+applyTranslations();
+</script>
+</body>
+</html>
