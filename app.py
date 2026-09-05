@@ -201,9 +201,9 @@ MAX_ROUND_ITEMS = 10
 # ── Skins catalog ────────────────────────────────────────────
 PRICES = {'common': 40, 'uncommon': 80, 'rare': 150, 'legendary': 300}
 
-def _s(sid, typ, emoji, name, name_es, rarity):
+def _s(sid, typ, emoji, name, name_es, rarity, custom_price=None):
     return {'id': sid, 'type': typ, 'emoji': emoji, 'name': name,
-            'name_es': name_es, 'rarity': rarity, 'price': PRICES[rarity]}
+            'name_es': name_es, 'rarity': rarity, 'price': custom_price if custom_price is not None else PRICES[rarity]}
 
 SKINS = [
     # ── Avatars: Nhóm phiêu lưu ──
@@ -244,18 +244,29 @@ SKINS = [
     _s('void',   'theme', '🌙', 'Hư Không',          'Vacío',               'rare'),
     _s('solar',  'theme', '☀️', 'Thái Dương',        'Solar',               'legendary'),
     # ── Khung đại diện (Frames) ──
-    _s('none',   'frame', '✕', 'Mặc định',          'Sin Marco',           'common'),
-    _s('silver', 'frame', '🥈', 'Khung Bạc',         'Plata',               'uncommon'),
-    _s('gold',   'frame', '👑', 'Khung Vàng',        'Oro',                 'rare'),
-    _s('dragon', 'frame', '🐉', 'Khung Rồng Thần',   'Dragón',              'legendary'),
-    _s('legend', 'frame', '🌟', 'Khung Huyền Thoại', 'Leyenda',             'legendary'),
+    _s('none',          'frame', '✕',  'Mặc định',          'Sin Marco',        'common'),
+    _s('silver',        'frame', '🥈', 'Khung Bạc',         'Plata',            'uncommon'),
+    _s('gold',          'frame', '👑', 'Khung Vàng',        'Oro',              'rare'),
+    _s('dragon',        'frame', '🐉', 'Khung Rồng Thần',   'Dragón',           'legendary'),
+    _s('legend',        'frame', '🌟', 'Khung Huyền Thoại', 'Leyenda',          'legendary'),
+    _s('frame_summer',  'frame', '🏖️', 'Khung Mùa Hè',      'Marco de Verano',  'rare', 400),
+    _s('frame_student', 'frame', '🎓', 'Khung Học Sinh',    'Marco Estudiante', 'uncommon', 300),
+    # ── Trang phục học sinh EdTech (Outfits) ──
+    _s('hoodie_blue',   'outfit', '🧥', 'Áo hoodie xanh',   'Sudadera Azul',       'common', 250),
+    _s('tshirt_white',  'outfit', '👕', 'Áo thun trắng',    'Camiseta Blanca',     'uncommon', 200),
+    _s('jacket_black',  'outfit', '🧥', 'Áo khoác đen',     'Chaqueta Negra',      'rare', 350),
+    _s('sport_pants',   'outfit', '👖', 'Quần thể thao',    'Pantalón Deportivo',  'uncommon', 250),
+    _s('cap_blue',      'outfit', '🧢', 'Mũ lưỡi trai',     'Gorra Deportiva',     'common', 150),
+    _s('sport_glasses', 'outfit', '👓', 'Kính thể thao',    'Gafas Deportivas',    'uncommon', 200),
+    # ── Vật phẩm đặc biệt (Special Items) ──
+    _s('sticker_boost', 'item',   '⚡', 'Sticker tăng lực', 'Sticker de Poder',    'common', 150),
 ]
 SKIN_BY_TYPE = {}
 for _sk in SKINS:
     SKIN_BY_TYPE.setdefault(_sk['type'], {})[_sk['id']] = _sk
 
 # Everyone starts owning the defaults, so nobody can be left with nothing equipped.
-FREE_SKINS = {'avatar': ['auto'], 'theme': ['arcane'], 'frame': ['none']}
+FREE_SKINS = {'avatar': ['auto'], 'theme': ['arcane'], 'frame': ['none'], 'outfit': ['hoodie_blue']}
 
 # Coins per round. Deliberately the same gradient as the XP multiplier in #4:
 # what you earn to spend on skins tracks the difficulty you actually faced and
@@ -1437,7 +1448,7 @@ def get_character(name):
     with sqlite3.connect(DB) as c:
         maybe_reset_week(c)     # this route reads week_xp, so it must rotate first
         row = c.execute(
-            "SELECT xp, level, items, rounds_played, COALESCE(cosmetics,'{}'), COALESCE(unit_xp,'{}'), COALESCE(week_xp,0), COALESCE(unit_rounds,'{}'), COALESCE(difficulty,2), COALESCE(coins,0), COALESCE(owned_skins,'[]') FROM characters WHERE name=?", (name,)
+            "SELECT xp, level, items, rounds_played, COALESCE(cosmetics,'{}'), COALESCE(unit_xp,'{}'), COALESCE(week_xp,0), COALESCE(unit_rounds,'{}'), COALESCE(difficulty,2), COALESCE(coins,0), COALESCE(owned_skins,'[]'), COALESCE(best_streak,5) FROM characters WHERE name=?", (name,)
         ).fetchone()
         if not row:
             # Read-only: characters are created via /api/auth (which enforces the
@@ -1446,16 +1457,16 @@ def get_character(name):
             return jsonify({'name': name, 'xp': 0, 'level': 1,
                             'items': [], 'rounds_played': 0, 'new': True,
                             'cosmetics': {}, 'unit_xp': {}, 'week_xp': 0, 'unit_rounds': {},
-                            'difficulty': 2, 'coins': 0,
+                            'difficulty': 2, 'coins': 0, 'streak': 5,
                             'owned': sorted({i for ids in FREE_SKINS.values() for i in ids})})
-        xp, level, items_json, rounds, cosmetics_json, unit_xp_json, week_xp, unit_rounds_json, difficulty, coins, owned_json = row
+        xp, level, items_json, rounds, cosmetics_json, unit_xp_json, week_xp, unit_rounds_json, difficulty, coins, owned_json, best_streak = row
         return jsonify({'name': name, 'xp': xp, 'level': level,
                         'items': json.loads(items_json or '[]'),
                         'rounds_played': rounds, 'new': False,
                         'cosmetics': json.loads(cosmetics_json or '{}'),
                         'unit_xp': json.loads(unit_xp_json or '{}'),
                         'week_xp': week_xp, 'difficulty': difficulty,
-                        'coins': coins,
+                        'coins': coins, 'streak': max(5, int(best_streak or 5)),
                         'owned': sorted(set(json.loads(owned_json or '[]'))
                                         | {i for ids in FREE_SKINS.values() for i in ids}),
                         'unit_rounds': json.loads(unit_rounds_json or '{}')})

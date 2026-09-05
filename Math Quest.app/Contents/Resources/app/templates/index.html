@@ -37,7 +37,7 @@
       <ul class="edtech-menu" id="edtechMenu">
         <li><a class="edtech-menu-link active" onclick="window.scrollTo({top:0,behavior:'smooth'})">Trang chủ</a></li>
         <li><a class="edtech-menu-link" onclick="handleNavPractice()">Luyện tập</a></li>
-        <li><a class="edtech-menu-link" onclick="openRoomJoinModal()">Đấu trường</a></li>
+        <li><a class="edtech-menu-link" onclick="handleNavArena()">Đấu trường</a></li>
         <li><a class="edtech-menu-link" onclick="handleNavLeaderboard()">Bảng xếp hạng</a></li>
       </ul>
 
@@ -128,7 +128,7 @@
         </div>
 
         <!-- Feature 2 -->
-        <div class="edtech-feature-card" onclick="openRoomJoinModal()">
+        <div class="edtech-feature-card" onclick="handleNavArena()">
           <div class="edtech-card-icon icon-bg-yellow">⚔️</div>
           <h3 class="edtech-card-title">Đấu trường hấp dẫn</h3>
           <p class="edtech-card-desc">Thi đấu trực tiếp cùng bạn bè qua mã phòng PIN 6 số. Bảng xếp hạng cập nhật theo thời gian thực tăng hào hứng học tập.</p>
@@ -217,8 +217,437 @@
   </div>
 </div>
 
-<!-- ══ 2: CHARACTER ══════════════════════════════════════════ -->
-<div class="screen" id="characterScreen">
+<!-- ══ 2: PHÂN HỆ HỌC SINH (EDTECH STUDENT PORTAL) ════════════ -->
+<div class="screen" id="studentPortalScreen">
+  <div class="sp-layout">
+    <!-- ── 1. SIDEBAR (CỐ ĐỊNH BÊN TRÁI) ── -->
+    <aside class="sp-sidebar" id="spSidebar">
+      <div class="sp-sidebar-header">
+        <div class="sp-brand" onclick="switchStudentView('dashboard')">
+          <img src="/static/logo.png" alt="Logo" class="sp-logo-img">
+          <div class="sp-brand-text">
+            <span class="sp-brand-sub">NỀN TẢNG HỌC TOÁN 6</span>
+            <span class="sp-brand-title">ĐẤU TRƯỜNG TOÁN HỌC</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Menu Điều Hướng -->
+      <nav class="sp-nav-menu">
+        <button class="sp-nav-item active" id="spNav-dashboard" onclick="switchStudentView('dashboard')">
+          <span class="sp-nav-icon">🏠</span>
+          <span class="sp-nav-label">Tổng quan</span>
+        </button>
+        <button class="sp-nav-item" id="spNav-practice" onclick="switchStudentView('practice')">
+          <span class="sp-nav-icon">📚</span>
+          <span class="sp-nav-label">Luyện tập</span>
+        </button>
+        <button class="sp-nav-item" id="spNav-arena" onclick="switchStudentView('arena')">
+          <span class="sp-nav-icon">⚔️</span>
+          <span class="sp-nav-label">Đấu trường</span>
+        </button>
+        <button class="sp-nav-item" id="spNav-leaderboard" onclick="switchStudentView('leaderboard')">
+          <span class="sp-nav-icon">🏆</span>
+          <span class="sp-nav-label">Bảng xếp hạng</span>
+        </button>
+        <button class="sp-nav-item" id="spNav-inventory" onclick="switchStudentView('inventory')">
+          <span class="sp-nav-icon">🎒</span>
+          <span class="sp-nav-label">Túi đồ</span>
+        </button>
+        <button class="sp-nav-item" id="spNav-shop" onclick="switchStudentView('shop')">
+          <span class="sp-nav-icon">🛍️</span>
+          <span class="sp-nav-label">Cửa hàng</span>
+        </button>
+      </nav>
+
+      <!-- Chân Sidebar -->
+      <div class="sp-sidebar-footer">
+        <button class="sp-nav-item" onclick="openStudentSettings()">
+          <span class="sp-nav-icon">⚙️</span>
+          <span class="sp-nav-label">Cài đặt</span>
+        </button>
+        <button class="sp-nav-item sp-nav-logout" onclick="doLogout()">
+          <span class="sp-nav-icon">🚪</span>
+          <span class="sp-nav-label">Đăng xuất</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ── 2. WORKSPACE BÊN PHẢI ── -->
+    <main class="sp-main">
+      <!-- ── TOPBAR ── -->
+      <header class="sp-topbar">
+        <div class="sp-topbar-left">
+          <button class="sp-mobile-toggle" onclick="toggleStudentSidebar()" aria-label="Toggle Menu">☰</button>
+          <div class="sp-topbar-tabs">
+            <button class="sp-top-tab active" id="spTab-dashboard" onclick="switchStudentView('dashboard')">Tổng quan</button>
+            <button class="sp-top-tab" id="spTab-practice" onclick="switchStudentView('practice')">Luyện tập</button>
+            <button class="sp-top-tab" id="spTab-arena" onclick="switchStudentView('arena')">Đấu trường</button>
+            <button class="sp-top-tab" id="spTab-leaderboard" onclick="switchStudentView('leaderboard')">Bảng xếp hạng</button>
+          </div>
+        </div>
+
+        <div class="sp-topbar-right">
+          <button class="sp-bell-btn" onclick="showPortalToast('🔔 Bạn chưa có thông báo mới.')" title="Thông báo">🔔</button>
+          
+          <div class="sp-user-badge" onclick="switchStudentView('inventory')" title="Xem túi đồ nhân vật">
+            <img src="/static/student_avatar.png" alt="Avatar" class="sp-user-avatar-img" id="spTopAvatar">
+            <div class="sp-user-meta">
+              <span class="sp-user-name" id="spTopName">Nguyễn Minh Anh</span>
+              <span class="sp-user-class" id="spTopClass">Lớp 6A</span>
+            </div>
+          </div>
+
+          <button class="sp-btn-home" onclick="showScreen('startScreen')" title="Quay về trang Đại sảnh">
+            🏛️ Đại sảnh
+          </button>
+        </div>
+      </header>
+
+      <!-- ── VIEWS CONTENT ── -->
+      <div class="sp-view-content">
+
+        <!-- ── VIEW 1: TỔNG QUAN (DASHBOARD) ── -->
+        <div class="sp-view active" id="spView-dashboard">
+          <!-- Banner chào mừng + Mountain illustration -->
+          <div class="sp-welcome-banner">
+            <div class="sp-welcome-left">
+              <h1 class="sp-welcome-title">Chào <span id="spDashGreetingName">Minh Anh</span> 👋</h1>
+              <p class="sp-welcome-sub">Hôm nay mình chinh phục thử thách nào?</p>
+              <div class="sp-welcome-streak">
+                <span>🔥</span>
+                <span><span id="spDashStreak">5</span> ngày liên tiếp – Cùng giữ chuỗi nhé!</span>
+              </div>
+            </div>
+            <div class="sp-welcome-art">
+              <img src="/static/mountain_banner.png" alt="Đỉnh núi vinh quang" class="sp-mountain-img">
+            </div>
+          </div>
+
+          <!-- Top Grid: 2 Cards (Hồ sơ học sinh & Thử thách hôm nay) -->
+          <div class="sp-dash-grid-2">
+            <!-- Card Hồ Sơ Học Sinh -->
+            <div class="sp-card">
+              <div class="sp-profile-header">
+                <img src="/static/student_avatar.png" alt="Avatar" class="sp-profile-avatar-big" id="spDashProfileAvatar">
+                <div>
+                  <div class="sp-profile-title-row">
+                    <span class="sp-profile-name" id="spDashProfileName">Nguyễn Minh Anh</span>
+                    <span class="sp-profile-class" id="spDashProfileClass">Lớp 6A</span>
+                  </div>
+                  <div class="sp-profile-rank-badge" id="spDashLevelBadge">Cấp độ 3 · Học viên khám phá</div>
+                </div>
+              </div>
+
+              <!-- Thanh tiến trình XP -->
+              <div class="sp-xp-block">
+                <div class="sp-xp-label-row">
+                  <span>Tiến độ kinh nghiệm (XP)</span>
+                  <span><strong id="spDashXpCur">320</strong> / <span id="spDashXpNext">600</span> XP</span>
+                </div>
+                <div class="sp-xp-track">
+                  <div class="sp-xp-fill" id="spDashXpBar" style="width: 53%;"></div>
+                </div>
+              </div>
+
+              <!-- Thống kê tài sản -->
+              <div class="sp-profile-bottom-stats">
+                <div class="sp-stat-pill">
+                  <span style="font-size:1.15rem">🪙</span>
+                  <span><strong id="spDashCoins">1.250</strong> Vàng</span>
+                </div>
+                <div class="sp-stat-pill">
+                  <span style="font-size:1.15rem">🔥</span>
+                  <span><strong id="spDashStreakPill">5</strong> ngày liên tiếp</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card Thử Thách Hôm Nay -->
+            <div class="sp-card sp-card-daily">
+              <div>
+                <div class="sp-daily-badge">
+                  <span>⚡</span> THỬ THÁCH HÔM NAY
+                </div>
+                <h3 class="sp-daily-title">Hoàn thành 5 câu hỏi toán</h3>
+                <p class="sp-daily-desc">Khởi động trí não với các câu hỏi tư duy nhanh để nhận thưởng kinh nghiệm và vàng!</p>
+                <div class="sp-daily-rewards">
+                  <span class="sp-reward-pill">⭐ +50 XP</span>
+                  <span class="sp-reward-pill">🪙 +20 Vàng</span>
+                </div>
+              </div>
+              <button class="sp-btn-action amber" onclick="startDailyChallenge()">
+                Bắt đầu ngay →
+              </button>
+            </div>
+          </div>
+
+          <!-- 3 Thẻ Thao Tác Nhanh -->
+          <div class="sp-dash-grid-3">
+            <div class="sp-card sp-quick-card">
+              <div>
+                <div class="sp-quick-icon red">⚔️</div>
+                <h4 class="sp-quick-title">Đấu trường</h4>
+                <p class="sp-quick-desc">Thử sức cùng bạn bè trong lớp hoặc thi đấu tự do tính điểm xếp hạng.</p>
+              </div>
+              <button class="sp-btn-action blue" onclick="switchStudentView('arena')">
+                Tham gia ngay →
+              </button>
+            </div>
+
+            <div class="sp-card sp-quick-card">
+              <div>
+                <div class="sp-quick-icon blue">📚</div>
+                <h4 class="sp-quick-title">Luyện tập</h4>
+                <p class="sp-quick-desc">Rèn luyện kiến thức 35 chuyên đề bám sát SGK Toán 6, tiến bộ mỗi ngày.</p>
+              </div>
+              <button class="sp-btn-action blue" onclick="switchStudentView('practice')">
+                Học ngay →
+              </button>
+            </div>
+
+            <div class="sp-card sp-quick-card">
+              <div>
+                <div class="sp-quick-icon yellow">🏆</div>
+                <h4 class="sp-quick-title">Bảng xếp hạng</h4>
+                <p class="sp-quick-desc">Xem bảng vinh danh các cao thủ Toán học xuất sắc nhất tuần và tháng.</p>
+              </div>
+              <button class="sp-btn-action outline" onclick="switchStudentView('leaderboard')">
+                Xem bảng →
+              </button>
+            </div>
+          </div>
+
+          <!-- Bottom Grid: Tiếp tục học + Tiến độ các chương -->
+          <div class="sp-dash-grid-bottom">
+            <!-- Tiếp tục học -->
+            <div class="sp-card">
+              <div class="sp-continue-badge">Tiếp tục học</div>
+              <div style="font-size:0.85rem;color:#64748B;font-weight:700;margin-bottom:2px">Chương 2 - Số nguyên</div>
+              <h3 class="sp-continue-title">Các phép cộng và trừ số nguyên</h3>
+              <div class="sp-continue-progress-txt">Tiến độ: 3/6 bài hoàn thành (50%)</div>
+              <div class="sp-xp-track" style="margin-bottom:18px">
+                <div class="sp-xp-fill" style="width:50%;background:#10B981"></div>
+              </div>
+              <button class="sp-btn-action blue" onclick="selectTopic('c2b')">
+                Học tiếp →
+              </button>
+              <div class="sp-plane-note">
+                <span style="font-size:1.4rem">✈️</span>
+                <span>"Toán học không khó – Bạn hoàn toàn làm được!"</span>
+              </div>
+            </div>
+
+            <!-- Tiến độ các chương -->
+            <div class="sp-card">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+                <h3 style="font-size:1.15rem;font-weight:800;color:#0F172A">Tiến độ các chương</h3>
+                <a onclick="switchStudentView('practice')" style="font-size:0.82rem;font-weight:800;color:#1D4ED8;cursor:pointer">Xem tất cả chương →</a>
+              </div>
+              <div id="spDashChapterProgressList">
+                <!-- Dynamically rendered -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── VIEW 2: LUYỆN TẬP (PRACTICE) ── -->
+        <div class="sp-view" id="spView-practice">
+          <div class="sp-view-header">
+            <h1 class="sp-view-title">Luyện tập theo chuyên đề</h1>
+            <p class="sp-view-sub">Hệ thống 8 chương chuẩn GDPT 2018 Toán lớp 6 kèm câu hỏi sinh tự động và giải thích chi tiết</p>
+          </div>
+
+          <!-- Ô tìm kiếm chuyên đề -->
+          <div class="sp-practice-search-box">
+            <span class="sp-practice-search-icon">🔍</span>
+            <input type="text" class="sp-practice-search-input" id="spPracticeSearch" placeholder="Tìm kiếm chuyên đề (ví dụ: số nguyên, phân số, góc, tam giác...)" oninput="filterPracticeTopics(this.value)">
+          </div>
+
+          <!-- Thanh lọc nhanh (Filter pills) -->
+          <div class="sp-pills-scroll" id="spPracticeFilterPills">
+            <button class="sp-pill-btn active" onclick="filterPracticeChapter('all', this)">Tất cả</button>
+            <button class="sp-pill-btn" onclick="filterPracticeChapter('c1', this)">Chương 1</button>
+            <button class="sp-pill-btn" onclick="filterPracticeChapter('c2', this)">Chương 2</button>
+            <button class="sp-pill-btn" onclick="filterPracticeChapter('c3', this)">Chương 3</button>
+            <button class="sp-pill-btn" onclick="filterPracticeChapter('c4', this)">Chương 4</button>
+            <button class="sp-pill-btn" onclick="filterPracticeChapter('c5', this)">Chương 5</button>
+            <button class="sp-pill-btn" onclick="filterPracticeChapter('c6', this)">Chương 6</button>
+            <button class="sp-pill-btn" onclick="filterPracticeChapter('c7', this)">Chương 7</button>
+            <button class="sp-pill-btn" onclick="filterPracticeChapter('c8', this)">Chương 8</button>
+          </div>
+
+          <!-- Danh sách 8 Chương chuẩn Toán 6 -->
+          <div class="sp-chapters-list" id="spChaptersList">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- ── VIEW 3: ĐẤU TRƯỜNG (ARENA) ── -->
+        <div class="sp-view" id="spView-arena">
+          <div class="sp-view-header">
+            <h1 class="sp-view-title">Đấu trường</h1>
+            <p class="sp-view-sub">Chọn cách bạn muốn thử sức hôm nay để so tài trí tuệ và nhận vinh quang!</p>
+          </div>
+
+          <div class="sp-arena-grid">
+            <!-- Đấu trường lớp học -->
+            <div class="sp-arena-card">
+              <div class="sp-arena-icon-wrap purple">🖥️</div>
+              <h2 class="sp-arena-title">Đấu trường lớp học</h2>
+              <p class="sp-arena-desc">Tham gia phòng thi đấu trực tiếp do thầy cô giáo tổ chức với mã PIN 6 chữ số.</p>
+              <div style="width:100%;display:flex;flex-direction:column;align-items:center">
+                <input type="tel" id="spArenaPinInput" maxlength="6" class="sp-arena-input" placeholder="849201">
+                <div id="spArenaPinErr" style="display:none;color:#DC2626;font-size:0.82rem;font-weight:700;margin-bottom:12px"></div>
+                <button class="sp-btn-action blue" style="width:100%;max-width:280px" onclick="submitArenaPin()">
+                  Tham gia phòng →
+                </button>
+              </div>
+            </div>
+
+            <!-- Đấu trường tự do -->
+            <div class="sp-arena-card">
+              <div class="sp-arena-icon-wrap blue">⚔️</div>
+              <h2 class="sp-arena-title">Đấu trường tự do</h2>
+              <p class="sp-arena-desc">Tự chọn chương và chuyên đề thử thách không giới hạn để rèn luyện tốc độ và tư duy.</p>
+              <div style="width:100%;display:flex;flex-direction:column;align-items:center">
+                <select id="spArenaChapterSelect" class="sp-arena-select" onchange="handleArenaChapterChange()">
+                  <option value="all">Tất cả các chương</option>
+                </select>
+                <select id="spArenaTopicSelect" class="sp-arena-select">
+                  <option value="mix">🎲 Ngẫu nhiên toàn bộ</option>
+                </select>
+                <button class="sp-btn-action amber" style="width:100%;max-width:300px;margin-top:10px" onclick="startArenaFreeMode()">
+                  Bắt đầu thử thách →
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── VIEW 4: BẢNG XẾP HẠNG (LEADERBOARD) ── -->
+        <div class="sp-view" id="spView-leaderboard">
+          <div class="sp-view-header">
+            <h1 class="sp-view-title">Bảng xếp hạng</h1>
+            <p class="sp-view-sub">Cùng nhau tiến bộ, cùng nhau chinh phục đỉnh cao tri thức!</p>
+          </div>
+
+          <div class="sp-leader-layout">
+            <!-- Cột trái: Bảng vinh danh -->
+            <div class="sp-leader-card">
+              <div class="sp-leader-filters">
+                <button class="sp-pill-btn active" id="spLeadTab-weekly" onclick="filterLeaderboard('weekly')">Tuần này</button>
+                <button class="sp-pill-btn" id="spLeadTab-monthly" onclick="filterLeaderboard('monthly')">Tháng này</button>
+                <button class="sp-pill-btn" id="spLeadTab-alltime" onclick="filterLeaderboard('alltime')">Tất cả</button>
+              </div>
+
+              <div style="overflow-x:auto">
+                <table class="sp-leader-table">
+                  <thead>
+                    <tr>
+                      <th class="sp-leader-th" style="width:70px">Hạng</th>
+                      <th class="sp-leader-th">Học Sinh</th>
+                      <th class="sp-leader-th" style="width:110px">Lớp</th>
+                      <th class="sp-leader-th" style="text-align:right">Điểm XP</th>
+                    </tr>
+                  </thead>
+                  <tbody id="spLeaderboardBody">
+                    <tr><td colspan="4" style="text-align:center;padding:30px;color:#94A3B8;font-weight:700">Đang tải bảng xếp hạng…</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Cột phải: Thẻ vị trí của bạn -->
+            <div class="sp-card sp-my-rank-card">
+              <img src="/static/student_avatar.png" alt="Avatar" class="sp-my-avatar-big" id="spMyAvatarImg">
+              <h3 class="sp-my-name" id="spMyRankName">Nguyễn Minh Anh</h3>
+              <div class="sp-my-class" id="spMyRankClass">Lớp 6A</div>
+
+              <div class="sp-my-stats-box">
+                <div class="sp-my-stat-item">
+                  <span class="sp-my-stat-lbl">Hạng Của Bạn</span>
+                  <span class="sp-my-stat-val" id="spMyRankNum">#5</span>
+                </div>
+                <div class="sp-my-stat-item">
+                  <span class="sp-my-stat-lbl">Tổng XP</span>
+                  <span class="sp-my-stat-val" id="spMyRankXp">1.250</span>
+                </div>
+              </div>
+
+              <div class="sp-quote-box">
+                <div style="font-size:1.1rem;margin-bottom:4px">💡 Lời khuyên hôm nay</div>
+                <div>"Không có giới hạn cho những ai dám cố gắng mỗi ngày!"</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── VIEW 5: TÚI ĐỒ (INVENTORY) ── -->
+        <div class="sp-view" id="spView-inventory">
+          <div class="sp-view-header">
+            <h1 class="sp-view-title">Túi đồ của bạn</h1>
+            <p class="sp-view-sub">Xem hình ảnh nhân vật và tùy chọn trang phục, phụ kiện yêu thích</p>
+          </div>
+
+          <div class="sp-inv-layout">
+            <!-- Cột trái: Nhân vật -->
+            <div class="sp-char-preview-card">
+              <div class="sp-char-img-box">
+                <img src="/static/student_char.png" alt="Nhân vật học sinh" class="sp-char-img" id="spInvCharImg">
+              </div>
+              <div class="sp-char-outfit-name" id="spInvOutfitLabel">Áo hoodie xanh</div>
+              <button class="sp-btn-action blue" style="width:100%" onclick="switchStudentView('shop')">
+                Đổi trang phục →
+              </button>
+            </div>
+
+            <!-- Cột phải: Danh mục vật phẩm sở hữu -->
+            <div class="sp-card">
+              <div class="sp-wardrobe-tabs">
+                <button class="sp-pill-btn active" id="spInvTab-outfit" onclick="filterInventoryTab('outfit')">Trang phục</button>
+                <button class="sp-pill-btn" id="spInvTab-frame" onclick="filterInventoryTab('frame')">Khung avatar</button>
+                <button class="sp-pill-btn" id="spInvTab-item" onclick="filterInventoryTab('item')">Vật phẩm</button>
+              </div>
+
+              <div class="sp-wardrobe-grid" id="spInventoryGrid">
+                <!-- Dynamically filled -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── VIEW 6: CỬA HÀNG (SHOP) ── -->
+        <div class="sp-view" id="spView-shop">
+          <div class="sp-shop-header-row">
+            <div>
+              <h1 class="sp-view-title" style="margin-bottom:2px">Cửa hàng</h1>
+              <p class="sp-view-sub">Dùng vàng tích lũy qua các bài thi đấu để sở hữu những vật phẩm phong cách!</p>
+            </div>
+            <div class="sp-gold-badge">
+              <span>🪙</span> <span id="spShopGoldDisplay">1.250</span> Vàng
+            </div>
+          </div>
+
+          <div class="sp-wardrobe-tabs" style="margin-bottom:22px">
+            <button class="sp-pill-btn active" id="spShopTab-all" onclick="filterShopTab('all')">Tất cả</button>
+            <button class="sp-pill-btn" id="spShopTab-outfit" onclick="filterShopTab('outfit')">Trang phục</button>
+            <button class="sp-pill-btn" id="spShopTab-frame" onclick="filterShopTab('frame')">Khung avatar</button>
+            <button class="sp-pill-btn" id="spShopTab-item" onclick="filterShopTab('item')">Vật phẩm</button>
+          </div>
+
+          <div class="sp-shop-grid" id="spShopGrid">
+            <!-- Dynamically filled -->
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ══ 3: CHARACTER (LEGACY FALLBACK) ═════════════════════════ -->
+<div class="screen" id="characterScreen" style="display:none !important">
   <div class="char-hero" id="charHeroEmoji">🧑</div>
   <div id="welcomeMsg" style="font-size:.82rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;text-align:center"></div>
   <div class="char-title" id="charTitle">Math Squire</div>
@@ -389,8 +818,9 @@
   </div>
   <div class="found-label" id="foundLabel" style="display:none" data-i18n="found_label">🎒 You found:</div>
   <div class="reward-items" id="rewardItems"></div>
-  <div class="reward-btns">
-    <button class="btn btn-amber" style="width:100%" onclick="goToTopics()" data-i18n="btn_play_again">Play Again!</button>
+  <div class="reward-btns" style="display:flex;gap:12px;width:100%;max-width:420px">
+    <button class="btn btn-ghost" style="flex:1" onclick="openStudentPortal('dashboard')">🏠 Về Tổng Quan</button>
+    <button class="btn btn-amber" style="flex:1" onclick="goToTopics()">Luyện Tiếp →</button>
   </div>
 </div>
 
@@ -828,9 +1258,11 @@ function updateBottomNav(screenId){
     topicScreen:'play', characterScreen:'home', playerScreen:'me', shopScreen:'shop',
     guildScreen:'guild', inventoryScreen:'bag', wardrobeScreen:'style',
   };
-  const isGame  = screenId === 'gameScreen';
-  const isStart = screenId === 'startScreen';
-  const showNav = !isGame && !isStart && currentUser;
+  const isGame   = screenId === 'gameScreen';
+  const isStart  = screenId === 'startScreen';
+  const isPortal = screenId === 'studentPortalScreen';
+  const isRoom   = screenId === 'roomPlayScreen';
+  const showNav  = !isGame && !isStart && !isPortal && !isRoom && currentUser;
   const nav = document.getElementById('bottomNav');
   if(nav) nav.style.display = showNav ? 'flex' : 'none';
   document.body.classList.toggle('show-nav', showNav);
@@ -845,16 +1277,20 @@ function updateBottomNav(screenId){
 }
 
 function navTo(dest){
-  if(dest==='play')  goToTopics();
-  else if(dest==='home') { renderCharacterScreen(false); showScreen('characterScreen'); }
-  else if(dest==='me')   showPlayerScreen();
-  else if(dest==='guild') showGuild();
-  else if(dest==='bag')  { showScreen('inventoryScreen'); renderInventory(); }
-  else if(dest==='shop')  showShop();
-  else if(dest==='style') showWardrobe();
+  if(dest==='play')  openStudentPortal('practice');
+  else if(dest==='home') openStudentPortal('dashboard');
+  else if(dest==='me')   openStudentPortal('dashboard');
+  else if(dest==='guild') openStudentPortal('leaderboard');
+  else if(dest==='bag')  openStudentPortal('inventory');
+  else if(dest==='shop')  openStudentPortal('shop');
+  else if(dest==='style') openStudentPortal('inventory');
 }
 
 async function goToTopics(){
+  if(currentUser && currentUser.role === 'student'){
+    openStudentPortal('practice');
+    return;
+  }
   await renderTopicScreen();
   showScreen('topicScreen');
 }
@@ -920,7 +1356,7 @@ function startQuest(){
     location.href = '/teacher';
     return;
   }
-  goToTopics();
+  openStudentPortal('dashboard');
 }
 
 function handleHeroCta(){
@@ -936,7 +1372,15 @@ function handleNavPractice(){
     openAuthModal('login');
     return;
   }
-  goToTopics();
+  openStudentPortal('practice');
+}
+
+function handleNavArena(){
+  if(!currentUser){
+    openAuthModal('login');
+    return;
+  }
+  openStudentPortal('arena');
 }
 
 function handleNavLeaderboard(){
@@ -944,7 +1388,550 @@ function handleNavLeaderboard(){
     openAuthModal('login');
     return;
   }
-  showGuild();
+  openStudentPortal('leaderboard');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// PHÂN HỆ HỌC SINH (EDTECH STUDENT PORTAL SYSTEM)
+// ══════════════════════════════════════════════════════════════════
+let currentStudentView = 'dashboard';
+let currentLeaderboardTab = 'weekly';
+let currentInvTab = 'outfit';
+let currentShopTab = 'all';
+let currentPracticeFilter = 'all';
+
+// ── Mở Phân Hệ Học Sinh ──
+async function openStudentPortal(view = 'dashboard'){
+  if(!currentUser){
+    openAuthModal('login');
+    return;
+  }
+  if(currentUser.role === 'teacher'){
+    location.href = '/teacher';
+    return;
+  }
+
+  const name = currentUser.username || localStorage.getItem('mq_name') || 'Minh Anh';
+  if(!character.name || character.name !== name){
+    try {
+      const data = await loadCharacter(name);
+      if(data) character = {...data, name};
+    } catch(e){
+      console.warn('loadCharacter error:', e);
+      character.name = name;
+    }
+  }
+
+  showScreen('studentPortalScreen');
+  switchStudentView(view);
+}
+
+// ── Chuyển Đổi Các Màn Hình Con (6 Views) ──
+function switchStudentView(view){
+  currentStudentView = view;
+
+  // Cập nhật Sidebar tabs
+  document.querySelectorAll('.sp-nav-item').forEach(el => el.classList.remove('active'));
+  const navEl = document.getElementById('spNav-' + view);
+  if(navEl) navEl.classList.add('active');
+
+  // Cập nhật Topbar tabs
+  document.querySelectorAll('.sp-top-tab').forEach(el => el.classList.remove('active'));
+  const tabEl = document.getElementById('spTab-' + view);
+  if(tabEl) tabEl.classList.add('active');
+
+  // Kích hoạt View được chọn
+  document.querySelectorAll('.sp-view').forEach(el => el.classList.remove('active'));
+  const viewEl = document.getElementById('spView-' + view);
+  if(viewEl) viewEl.classList.add('active');
+
+  // Đóng sidebar trên thiết bị di động nếu đang mở
+  const sidebar = document.getElementById('spSidebar');
+  if(sidebar) sidebar.classList.remove('mobile-open');
+
+  // Đồng bộ thông tin học sinh trên thanh tiêu đề
+  updateStudentHeaderInfo();
+
+  // Render nội dung theo view
+  if(view === 'dashboard'){
+    renderStudentDashboard();
+  } else if(view === 'practice'){
+    renderStudentPractice();
+  } else if(view === 'arena'){
+    renderStudentArena();
+  } else if(view === 'leaderboard'){
+    renderStudentLeaderboard(currentLeaderboardTab);
+  } else if(view === 'inventory'){
+    renderStudentInventory(currentInvTab);
+  } else if(view === 'shop'){
+    renderStudentShop(currentShopTab);
+  }
+}
+
+// ── Toggle Mobile Sidebar ──
+function toggleStudentSidebar(){
+  const sb = document.getElementById('spSidebar');
+  if(sb) sb.classList.toggle('mobile-open');
+}
+
+// ── Cập nhật Header & Avatar học sinh ──
+function updateStudentHeaderInfo(){
+  const displayName = character.name || (currentUser ? currentUser.username : 'Minh Anh');
+  const userClass = 'Lớp 6A';
+
+  const topName = document.getElementById('spTopName');
+  if(topName) topName.textContent = displayName;
+  const topClass = document.getElementById('spTopClass');
+  if(topClass) topClass.textContent = userClass;
+}
+
+// ── 1. RENDER DASHBOARD (TỔNG QUAN) ──
+function renderStudentDashboard(){
+  const displayName = character.name || 'Minh Anh';
+  const streak = character.streak || 5;
+  const coins = character.coins !== undefined ? character.coins : 1250;
+  const xp = character.xp || 0;
+  const info = getLevelInfo(xp);
+  const nextXp = getNextXp(xp) || (xp + 280);
+  const pct = nextXp ? Math.min(100, Math.round(((xp - info.xp) / (nextXp - info.xp)) * 100)) : 100;
+
+  // Banner
+  const greetEl = document.getElementById('spDashGreetingName');
+  if(greetEl) greetEl.textContent = displayName;
+  const streakEl = document.getElementById('spDashStreak');
+  if(streakEl) streakEl.textContent = streak;
+
+  // Profile Card
+  const pName = document.getElementById('spDashProfileName');
+  if(pName) pName.textContent = displayName;
+  const pLvl = document.getElementById('spDashLevelBadge');
+  if(pLvl) pLvl.textContent = `Cấp độ ${info.level} · ${levelTitle(info) || 'Học viên khám phá'}`;
+  const pXpCur = document.getElementById('spDashXpCur');
+  if(pXpCur) pXpCur.textContent = xp.toLocaleString('vi-VN');
+  const pXpNext = document.getElementById('spDashXpNext');
+  if(pXpNext) pXpNext.textContent = nextXp.toLocaleString('vi-VN');
+  const pXpBar = document.getElementById('spDashXpBar');
+  if(pXpBar) pXpBar.style.width = pct + '%';
+  const pCoins = document.getElementById('spDashCoins');
+  if(pCoins) pCoins.textContent = coins.toLocaleString('vi-VN');
+  const pStreak = document.getElementById('spDashStreakPill');
+  if(pStreak) pStreak.textContent = streak;
+
+  // Chapter Progress List (Right Column)
+  const listEl = document.getElementById('spDashChapterProgressList');
+  if(!listEl) return;
+  listEl.innerHTML = '';
+
+  const defaultProgress = [75, 40, 15, 0, 0, 0, 0, 0];
+  UNIT_GROUPS.forEach((grp, idx) => {
+    const item = document.createElement('div');
+    item.className = 'sp-chapter-item';
+    
+    // Calculate progress if played, else fallback to sample
+    const uXp = (character.unit_xp && character.unit_xp[grp.id]) || 0;
+    const pctVal = uXp > 0 ? Math.min(100, Math.round(uXp / 10)) : (defaultProgress[idx] || 0);
+
+    item.innerHTML = `
+      <div class="sp-chap-num-badge" style="background:${grp.color}20;color:${grp.color}">${grp.num}</div>
+      <div class="sp-chap-info">
+        <div class="sp-chap-title">Chương ${grp.num}: ${grp.name}</div>
+        <div class="sp-chap-bar">
+          <div class="sp-chap-fill" style="width:${pctVal}%;background:${grp.color}"></div>
+        </div>
+      </div>
+      <div class="sp-chap-pct">${pctVal}%</div>
+    `;
+    listEl.appendChild(item);
+  });
+}
+
+// ── 2. RENDER PRACTICE (LUYỆN TẬP) ──
+function renderStudentPractice(){
+  const container = document.getElementById('spChaptersList');
+  if(!container) return;
+  container.innerHTML = '';
+
+  const defaultCompleted = [4, 2, 1, 0, 0, 0, 0, 0];
+  const badgeGradients = [
+    'linear-gradient(135deg,#2563EB,#38BDF8)',
+    'linear-gradient(135deg,#7C3AED,#A855F7)',
+    'linear-gradient(135deg,#059669,#34D399)',
+    'linear-gradient(135deg,#D97706,#FBBF24)',
+    'linear-gradient(135deg,#E11D48,#FB7185)',
+    'linear-gradient(135deg,#0D9488,#2DD4BF)',
+    'linear-gradient(135deg,#4F46E5,#818CF8)',
+    'linear-gradient(135deg,#EA580C,#FB923C)',
+  ];
+
+  UNIT_GROUPS.forEach((grp, idx) => {
+    // Filter check
+    if(currentPracticeFilter !== 'all' && currentPracticeFilter !== grp.id) return;
+
+    const subs = IM_UNITS.filter(u => u.parent === grp.id);
+    const completed = defaultCompleted[idx] || 0;
+    const pct = subs.length ? Math.round((completed / subs.length) * 100) : 0;
+    const gradient = badgeGradients[idx % badgeGradients.length];
+
+    const card = document.createElement('div');
+    card.className = 'sp-chap-card' + (idx === 0 ? ' open' : '');
+    card.id = 'spChapCard-' + grp.id;
+
+    card.innerHTML = `
+      <div class="sp-chap-header" onclick="toggleChapterCard('${grp.id}')">
+        <div class="sp-chap-left">
+          <div class="sp-chap-badge-big" style="background:${gradient}">${grp.num}</div>
+          <div class="sp-chap-details">
+            <h3 class="sp-chap-name">Chương ${grp.num}: ${grp.name}</h3>
+            <div class="sp-chap-subtext">${subs.length} chuyên đề · Đã hoàn thành ${completed}/${subs.length}</div>
+          </div>
+        </div>
+        <div class="sp-chap-right">
+          <div class="sp-chap-bar-box">
+            <div style="font-size:0.8rem;font-weight:800;color:#64748B">${pct}%</div>
+            <div class="sp-chap-bar" style="width:120px">
+              <div class="sp-chap-fill" style="width:${pct}%;background:${grp.color}"></div>
+            </div>
+          </div>
+          <span class="sp-chap-toggle-btn">›</span>
+        </div>
+      </div>
+      <div class="sp-chap-body">
+        <div class="sp-subtopics-grid">
+          ${subs.map(sub => `
+            <div class="sp-sub-card">
+              <div>
+                <div class="sp-sub-title">${sub.icon} ${sub.name}</div>
+                <div class="sp-sub-desc">${sub.desc || ''}</div>
+              </div>
+              <button class="sp-sub-btn" onclick="startStudentPractice('${sub.id}')">Luyện tập →</button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function toggleChapterCard(chapId){
+  const el = document.getElementById('spChapCard-' + chapId);
+  if(el) el.classList.toggle('open');
+}
+
+function filterPracticeChapter(chapId, btn){
+  currentPracticeFilter = chapId;
+  document.querySelectorAll('#spPracticeFilterPills .sp-pill-btn').forEach(b => b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderStudentPractice();
+}
+
+function filterPracticeTopics(query){
+  query = (query || '').toLowerCase().trim();
+  document.querySelectorAll('.sp-chap-card').forEach(card => {
+    const text = card.textContent.toLowerCase();
+    card.style.display = text.includes(query) ? '' : 'none';
+  });
+}
+
+function startStudentPractice(topicId){
+  selectTopic(topicId);
+}
+
+// ── 3. RENDER ARENA (ĐẤU TRƯỜNG) ──
+function renderStudentArena(){
+  const chapSelect = document.getElementById('spArenaChapterSelect');
+  if(!chapSelect) return;
+  chapSelect.innerHTML = '<option value="all">Tất cả các chương</option>';
+  UNIT_GROUPS.forEach(g => {
+    chapSelect.innerHTML += `<option value="${g.id}">Chương ${g.num}: ${g.name}</option>`;
+  });
+  handleArenaChapterChange();
+}
+
+function handleArenaChapterChange(){
+  const chapSelect = document.getElementById('spArenaChapterSelect');
+  const topSelect  = document.getElementById('spArenaTopicSelect');
+  if(!chapSelect || !topSelect) return;
+  const sel = chapSelect.value;
+  topSelect.innerHTML = '<option value="mix">🎲 Ngẫu nhiên toàn bộ</option>';
+  const filtered = sel === 'all' ? IM_UNITS : IM_UNITS.filter(u => u.parent === sel);
+  filtered.forEach(u => {
+    topSelect.innerHTML += `<option value="${u.id}">${u.icon} ${u.name}</option>`;
+  });
+}
+
+function submitArenaPin(){
+  const pinInput = document.getElementById('spArenaPinInput');
+  const errEl = document.getElementById('spArenaPinErr');
+  const pin = (pinInput ? pinInput.value : '').trim();
+  if(!pin || pin.length !== 6){
+    if(errEl){ errEl.textContent = 'Vui lòng nhập mã PIN gồm 6 chữ số.'; errEl.style.display = 'block'; }
+    return;
+  }
+  if(errEl) errEl.style.display = 'none';
+  const codeIn = document.getElementById('roomCodeInput');
+  if(codeIn) codeIn.value = pin;
+  submitRoomJoin();
+}
+
+function startArenaFreeMode(){
+  const topSelect = document.getElementById('spArenaTopicSelect');
+  const sel = topSelect ? topSelect.value : 'mix';
+  selectTopic(sel);
+}
+
+// ── 4. RENDER LEADERBOARD (BẢNG XẾP HẠNG) ──
+async function renderStudentLeaderboard(tab = 'weekly'){
+  currentLeaderboardTab = tab;
+  ['weekly', 'monthly', 'alltime'].forEach(t => {
+    const b = document.getElementById('spLeadTab-' + t);
+    if(b) b.classList.toggle('active', t === tab);
+  });
+
+  const body = document.getElementById('spLeaderboardBody');
+  if(!body) return;
+  body.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:30px;color:#94A3B8;font-weight:700">Đang tải bảng xếp hạng…</td></tr>';
+
+  try {
+    const viewParam = tab === 'weekly' ? 'weekly' : (tab === 'monthly' ? 'weekly' : 'alltime');
+    const r = await fetch(`/api/guild?view=${viewParam}`);
+    const data = await r.json();
+    
+    // Fallback students if empty DB
+    const list = (Array.isArray(data) && data.length) ? data : [
+      { name: 'Nguyễn Trần Bảo Nam', score: 2850, class: '6A' },
+      { name: 'Trần Gia Hân', score: 2420, class: '6B' },
+      { name: 'Lê Hoàng Dũng', score: 2150, class: '6A' },
+      { name: 'Phạm Phương Anh', score: 1890, class: '6C' },
+      { name: character.name || 'Nguyễn Minh Anh', score: 1250, class: '6A' },
+      { name: 'Đỗ Tuấn Khải', score: 1100, class: '6B' },
+      { name: 'Vũ Thảo My', score: 980, class: '6A' }
+    ];
+
+    body.innerHTML = '';
+    let myRank = 5;
+    const currentName = (character.name || '').toLowerCase();
+
+    list.forEach((st, idx) => {
+      const rank = idx + 1;
+      const isMe = currentName && st.name.toLowerCase() === currentName;
+      if(isMe) myRank = rank;
+
+      let rankDisplay = `<span class="sp-rank-num">#${rank}</span>`;
+      if(rank === 1) rankDisplay = `<span class="sp-rank-num sp-rank-1">🥇 1</span>`;
+      else if(rank === 2) rankDisplay = `<span class="sp-rank-num sp-rank-2">🥈 2</span>`;
+      else if(rank === 3) rankDisplay = `<span class="sp-rank-num sp-rank-3">🥉 3</span>`;
+
+      const tr = document.createElement('tr');
+      tr.className = 'sp-leader-tr' + (isMe ? ' my-row' : '');
+      if(isMe) tr.style.background = '#EFF6FF';
+
+      tr.innerHTML = `
+        <td class="sp-leader-td">${rankDisplay}</td>
+        <td class="sp-leader-td">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:1.3rem">🧑</span>
+            <span style="font-weight:800;color:${isMe ? '#1D4ED8' : '#0F172A'}">${st.name} ${isMe ? '(Bạn)' : ''}</span>
+          </div>
+        </td>
+        <td class="sp-leader-td"><span style="color:#64748B;font-weight:700">${st.class || 'Lớp 6A'}</span></td>
+        <td class="sp-leader-td" style="text-align:right">
+          <strong style="color:#1D4ED8;font-size:0.95rem">${(st.score || st.xp || 0).toLocaleString('vi-VN')} XP</strong>
+        </td>
+      `;
+      body.appendChild(tr);
+    });
+
+    // Cập nhật card "Vị trí của bạn"
+    const myRankEl = document.getElementById('spMyRankNum');
+    if(myRankEl) myRankEl.textContent = '#' + myRank;
+    const myXpEl = document.getElementById('spMyRankXp');
+    if(myXpEl) myXpEl.textContent = (character.xp || 1250).toLocaleString('vi-VN');
+    const myNameEl = document.getElementById('spMyRankName');
+    if(myNameEl) myNameEl.textContent = character.name || 'Nguyễn Minh Anh';
+
+  } catch(e){
+    console.error('leaderboard fetch error', e);
+  }
+}
+
+function filterLeaderboard(tab){
+  renderStudentLeaderboard(tab);
+}
+
+// ── 5. RENDER INVENTORY (TÚI ĐỒ) ──
+function renderStudentInventory(tab = 'outfit'){
+  currentInvTab = tab;
+  ['outfit', 'frame', 'item'].forEach(t => {
+    const b = document.getElementById('spInvTab-' + t);
+    if(b) b.classList.toggle('active', t === tab);
+  });
+
+  const grid = document.getElementById('spInventoryGrid');
+  if(!grid) return;
+  grid.innerHTML = '';
+
+  const owned = character.owned || ['hoodie_blue'];
+  const cosmetics = character.cosmetics || { outfit: 'hoodie_blue', frame: 'none' };
+  const curOutfit = cosmetics.outfit || 'hoodie_blue';
+
+  const outfitLabel = document.getElementById('spInvOutfitLabel');
+  if(outfitLabel){
+    const outItem = (typeof SKINS !== 'undefined' && SKINS.find(s => s.id === curOutfit));
+    outfitLabel.textContent = outItem ? outItem.name : 'Áo hoodie xanh';
+  }
+
+  // Danh mục đồ thời trang học sinh
+  const sampleItems = [
+    { id: 'hoodie_blue', type: 'outfit', emoji: '🧥', name: 'Áo hoodie xanh' },
+    { id: 'tshirt_white', type: 'outfit', emoji: '👕', name: 'Áo thun trắng' },
+    { id: 'jacket_black', type: 'outfit', emoji: '🧥', name: 'Áo khoác đen' },
+    { id: 'sport_pants', type: 'outfit', emoji: '👖', name: 'Quần thể thao' },
+    { id: 'cap_blue', type: 'outfit', emoji: '🧢', name: 'Mũ lưỡi trai' },
+    { id: 'sport_glasses', type: 'outfit', emoji: '👓', name: 'Kính thể thao' },
+    { id: 'frame_summer', type: 'frame', emoji: '🏖️', name: 'Khung mùa hè' },
+    { id: 'frame_student', type: 'frame', emoji: '🎓', name: 'Khung học sinh' },
+    { id: 'sticker_boost', type: 'item', emoji: '⚡', name: 'Sticker tăng lực' },
+  ];
+
+  const filtered = sampleItems.filter(it => it.type === tab);
+  filtered.forEach(it => {
+    const isOwned = owned.includes(it.id) || it.id === 'hoodie_blue';
+    const isEquipped = (it.type === 'outfit' && cosmetics.outfit === it.id) || (it.type === 'frame' && cosmetics.frame === it.id);
+
+    const tile = document.createElement('div');
+    tile.className = 'sp-item-tile' + (isEquipped ? ' equipped' : '');
+    tile.onclick = () => {
+      if(isOwned) equipStudentItem(it.id, it.type);
+      else switchStudentView('shop');
+    };
+
+    tile.innerHTML = `
+      <div class="sp-item-tile-icon">${it.emoji}</div>
+      <div class="sp-item-tile-name">${it.name}</div>
+      <div class="sp-item-tile-status">${isEquipped ? 'Đang dùng' : (isOwned ? 'Sở hữu' : 'Chưa có')}</div>
+    `;
+    grid.appendChild(tile);
+  });
+}
+
+function filterInventoryTab(tab){
+  renderStudentInventory(tab);
+}
+
+async function equipStudentItem(itemId, itemType){
+  if(!character.cosmetics) character.cosmetics = {};
+  character.cosmetics[itemType] = itemId;
+  applyCosmetics(character.cosmetics);
+  renderStudentInventory(currentInvTab);
+  showPortalToast(`Đã trang bị: ${itemId}`);
+
+  if(character.name){
+    fetch(`/api/character/${encodeURIComponent(character.name)}/equip`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ type: itemType, id: itemId })
+    }).catch(()=>{});
+  }
+}
+
+// ── 6. RENDER SHOP (CỬA HÀNG) ──
+function renderStudentShop(tab = 'all'){
+  currentShopTab = tab;
+  ['all', 'outfit', 'frame', 'item'].forEach(t => {
+    const b = document.getElementById('spShopTab-' + t);
+    if(b) b.classList.toggle('active', t === tab);
+  });
+
+  const goldEl = document.getElementById('spShopGoldDisplay');
+  if(goldEl) goldEl.textContent = (character.coins !== undefined ? character.coins : 1250).toLocaleString('vi-VN');
+
+  const grid = document.getElementById('spShopGrid');
+  if(!grid) return;
+  grid.innerHTML = '';
+
+  const owned = character.owned || ['hoodie_blue'];
+
+  const catalog = [
+    { id: 'hoodie_blue', type: 'outfit', emoji: '🧥', name: 'Áo hoodie xanh', price: 250 },
+    { id: 'tshirt_white', type: 'outfit', emoji: '👕', name: 'Áo thun trắng', price: 200 },
+    { id: 'jacket_black', type: 'outfit', emoji: '🧥', name: 'Áo khoác đen', price: 350 },
+    { id: 'sport_pants', type: 'outfit', emoji: '👖', name: 'Quần thể thao', price: 250 },
+    { id: 'cap_blue', type: 'outfit', emoji: '🧢', name: 'Mũ lưỡi trai', price: 150 },
+    { id: 'sport_glasses', type: 'outfit', emoji: '👓', name: 'Kính thể thao', price: 200 },
+    { id: 'frame_summer', type: 'frame', emoji: '🏖️', name: 'Khung avatar mùa hè', price: 400 },
+    { id: 'frame_student', type: 'frame', emoji: '🎓', name: 'Khung avatar học sinh', price: 300 },
+    { id: 'sticker_boost', type: 'item', emoji: '⚡', name: 'Sticker tăng lực', price: 150 },
+  ];
+
+  const filtered = tab === 'all' ? catalog : catalog.filter(c => c.type === tab);
+  filtered.forEach(it => {
+    const isOwned = owned.includes(it.id);
+    const card = document.createElement('div');
+    card.className = 'sp-shop-card';
+
+    card.innerHTML = `
+      <div class="sp-shop-img-box">${it.emoji}</div>
+      <div class="sp-shop-name">${it.name}</div>
+      <div class="sp-shop-price-row">
+        <span>🪙</span> <span>${it.price} Vàng</span>
+      </div>
+      <button class="sp-btn-buy ${isOwned ? 'owned' : 'primary'}" onclick="buyStudentShopItem('${it.id}', ${it.price})" ${isOwned ? 'disabled' : ''}>
+        ${isOwned ? '✓ Đã sở hữu' : 'Mua Ngay →'}
+      </button>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function filterShopTab(tab){
+  renderStudentShop(tab);
+}
+
+async function buyStudentShopItem(itemId, price){
+  const currentCoins = character.coins !== undefined ? character.coins : 1250;
+  if(currentCoins < price){
+    showPortalToast('⚠️ Bạn không đủ vàng để mua vật phẩm này.');
+    return;
+  }
+  character.coins = currentCoins - price;
+  if(!character.owned) character.owned = [];
+  if(!character.owned.includes(itemId)) character.owned.push(itemId);
+
+  showPortalToast('🎉 Mua vật phẩm thành công!');
+  renderStudentShop(currentShopTab);
+  renderStudentInventory(currentInvTab);
+
+  if(character.name){
+    fetch(`/api/character/${encodeURIComponent(character.name)}/buy`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ id: itemId })
+    }).catch(()=>{});
+  }
+}
+
+// ── Daily Challenge Mini Action ──
+function startDailyChallenge(){
+  selectTopic('c1b');
+}
+
+// ── Toast Notification Helper ──
+function showPortalToast(msg){
+  let t = document.getElementById('portalToast');
+  if(!t){
+    t = document.createElement('div');
+    t.id = 'portalToast';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0F172A;color:#FFFFFF;padding:12px 24px;border-radius:100px;font-size:0.9rem;font-weight:700;z-index:99999;box-shadow:0 10px 30px rgba(0,0,0,0.3);transition:opacity 0.2s;pointer-events:none';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  setTimeout(() => { t.style.opacity = '0'; }, 2500);
+}
+
+function openStudentSettings(){
+  showPortalToast('⚙️ Cài đặt tài khoản đang ở trạng thái chuẩn.');
 }
 
 function scrollToFeatures(){
@@ -1053,8 +2040,7 @@ async function doLogin(){
       const charData = await loadCharacter(d.username);
       character = {...charData, name: d.username};
       applyCosmetics(character.cosmetics);
-      renderCharacterScreen(false);
-      goToTopics();
+      openStudentPortal('dashboard');
     }
   } catch(e) {
     console.error(e);
@@ -1103,8 +2089,7 @@ async function doRegister(){
       const charData = await loadCharacter(d.username);
       character = {...charData, name: d.username};
       applyCosmetics(character.cosmetics);
-      renderCharacterScreen(true);
-      goToTopics();
+      openStudentPortal('dashboard');
     }
   } catch(e) {
     console.error(e);
@@ -1310,12 +2295,12 @@ async function submitRoomAnswer(qIdx, chosen, clickedBtn){
 function leaveRoom(){
   if(roomPollingInterval) clearInterval(roomPollingInterval);
   currentRoomCode = null;
-  showScreen('topicScreen');
+  openStudentPortal('arena');
 }
 
 function exitRoomToHome(){
   currentRoomCode = null;
-  location.reload();
+  openStudentPortal('dashboard');
 }
 
 function backToNamePicker(){
