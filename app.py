@@ -2,6 +2,7 @@ import sqlite3, socket, io, base64, os, json, random, re, time
 from datetime import date, timedelta
 from functools import wraps
 from flask import Flask, render_template, request, jsonify, redirect, session
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app  = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
@@ -56,15 +57,10 @@ app.secret_key = _load_secret()
 app.permanent_session_lifetime = timedelta(hours=12)   # one school day
 
 def require_teacher(fn):
-    """Gate a route behind the teacher login.
-
-    Browser navigations get redirected to the login page; anything scripted
-    (POST actions, /api reads) gets a 401 rather than a login page it cannot
-    render.
-    """
+    """Gate a route behind the teacher login."""
     @wraps(fn)
     def wrapper(*args, **kwargs):
-        if session.get('teacher'):
+        if session.get('role') == 'teacher' or session.get('teacher'):
             return fn(*args, **kwargs)
         if request.method == 'POST' or request.path.startswith('/api/'):
             return jsonify({'ok': False, 'error': 'unauthorized'}), 401
@@ -691,6 +687,69 @@ def init_db():
             misses     INTEGER DEFAULT 0,
             PRIMARY KEY (name, unit_id, difficulty)
         )''')
+
+        # Unified user accounts (Học sinh & Giáo viên)
+        c.execute('''CREATE TABLE IF NOT EXISTS users (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            username      TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            role          TEXT NOT NULL,
+            created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )''')
+
+        # Live Quiz Rooms (Phòng thi đấu trực tiếp)
+        c.execute('''CREATE TABLE IF NOT EXISTS rooms (
+            code          TEXT PRIMARY KEY,
+            title         TEXT DEFAULT '',
+            status        TEXT DEFAULT 'waiting',
+            config        TEXT DEFAULT '{}',
+            current_q     INTEGER DEFAULT 0,
+            show_result   INTEGER DEFAULT 0,
+            q_start_time  REAL DEFAULT 0,
+            questions     TEXT DEFAULT '[]',
+            created_by    TEXT NOT NULL,
+            created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )''')
+
+        c.execute('''CREATE TABLE IF NOT EXISTS room_players (
+            room_code     TEXT NOT NULL,
+            player_name   TEXT NOT NULL,
+            score         INTEGER DEFAULT 0,
+            streak        INTEGER DEFAULT 0,
+            answers       TEXT DEFAULT '{}',
+            last_ping     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (room_code, player_name)
+        )''')
+
+        # Custom Quizzes & Questions (Đề thi do giáo viên tự soạn)
+        c.execute('''CREATE TABLE IF NOT EXISTS custom_quizzes (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            title         TEXT NOT NULL,
+            description   TEXT DEFAULT '',
+            created_by    TEXT NOT NULL,
+            created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )''')
+
+        c.execute('''CREATE TABLE IF NOT EXISTS custom_questions (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            quiz_id       INTEGER NOT NULL,
+            question      TEXT NOT NULL,
+            choices       TEXT NOT NULL,
+            answer        TEXT NOT NULL,
+            why           TEXT DEFAULT '',
+            order_idx     INTEGER DEFAULT 0,
+            FOREIGN KEY (quiz_id) REFERENCES custom_quizzes (id) ON DELETE CASCADE
+        )''')
+
+        # Seed default teacher account if users table has no teacher
+        try:
+            t_exists = c.execute("SELECT 1 FROM users WHERE role='teacher'").fetchone()
+            if not t_exists:
+                c.execute("INSERT OR IGNORE INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+                          ('teacher', generate_password_hash(TEACHER_PASSWORD), 'teacher'))
+        except Exception:
+            pass
+
         # Default settings
         for uid in IM_UNITS:
             c.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', (uid, '1'))
@@ -809,26 +868,451 @@ def api_players():
         'cosmetics': json.loads(r[2] or '{}'),
     } for r in rows])
 
-@app.route('/api/auth', methods=['POST'])
-def api_auth():
-    d    = request.get_json(force=True)
-    name = clean_name(d.get('name', ''))
-    pin  = str(d.get('pin', '')).strip()
-    if not name or not re.match(r'^\d{4}$', pin):
-        return jsonify({'ok': False, 'error': 'invalid'}), 400
+# ── Unified User Authentication ──────────────────────────────
+@app.route('/api/auth/register', methods=['POST'])
+def api_auth_register():
+    d = request.get_json(force=True) or {}
+    username = clean_name(d.get('username', ''))
+    password = str(d.get('password', '')).strip()
+    role = str(d.get('role', 'student')).strip().lower()
+    
+    if not username or len(username) < 2:
+        return jsonify({'ok': False, 'error': 'Tên đăng nhập phải có ít nhất 2 ký tự.'}), 400
+    if len(password) < 4:
+        return jsonify({'ok': False, 'error': 'Mật khẩu phải có ít nhất 4 ký tự.'}), 400
+    if role not in ('student', 'teacher'):
+        return jsonify({'ok': False, 'error': 'Vai trò không hợp lệ.'}), 400
+        
+    p_hash = generate_password_hash(password)
     with sqlite3.connect(DB) as c:
-        row = c.execute('SELECT pin FROM characters WHERE name=?', (name,)).fetchone()
-        if row is None:
-            c.execute('INSERT OR IGNORE INTO characters (name, pin) VALUES (?,?)', (name, pin))
-            return jsonify({'ok': True, 'status': 'created'})
-        stored_pin = row[0]
-        if stored_pin is None:
-            # Legacy account (no PIN yet) — let them claim it
-            c.execute('UPDATE characters SET pin=? WHERE name=?', (pin, name))
-            return jsonify({'ok': True, 'status': 'pin_set'})
-        if stored_pin == pin:
-            return jsonify({'ok': True, 'status': 'ok'})
-        return jsonify({'ok': False, 'error': 'wrong_pin'})
+        row = c.execute("SELECT id FROM users WHERE username=?", (username,)).fetchone()
+        if row:
+            return jsonify({'ok': False, 'error': 'Tên đăng nhập này đã được sử dụng.'}), 400
+        c.execute("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+                  (username, p_hash, role))
+        user_id = c.execute("SELECT last_insert_rowid()").fetchone()[0]
+        if role == 'student':
+            c.execute("INSERT OR IGNORE INTO characters (name) VALUES (?)", (username,))
+            
+    session['user_id'] = user_id
+    session['username'] = username
+    session['role'] = role
+    if role == 'teacher':
+        session['teacher'] = True
+    session.permanent = True
+    return jsonify({'ok': True, 'username': username, 'role': role})
+
+@app.route('/api/auth/login', methods=['POST'])
+def api_auth_login():
+    d = request.get_json(force=True) or {}
+    username = clean_name(d.get('username', ''))
+    password = str(d.get('password', '')).strip()
+    
+    with sqlite3.connect(DB) as c:
+        row = c.execute("SELECT id, username, password_hash, role FROM users WHERE username=?", (username,)).fetchone()
+        if not row:
+            # Fallback for teacher: if username == 'teacher' and password == TEACHER_PASSWORD
+            if username.lower() == 'teacher' and password == TEACHER_PASSWORD:
+                session['username'] = 'teacher'
+                session['role'] = 'teacher'
+                session['teacher'] = True
+                session.permanent = True
+                return jsonify({'ok': True, 'username': 'teacher', 'role': 'teacher'})
+            return jsonify({'ok': False, 'error': 'Tên đăng nhập hoặc mật khẩu không chính xác.'}), 401
+            
+        user_id, u_name, p_hash, role = row
+        if not check_password_hash(p_hash, password):
+            return jsonify({'ok': False, 'error': 'Tên đăng nhập hoặc mật khẩu không chính xác.'}), 401
+            
+        if role == 'student':
+            c.execute("INSERT OR IGNORE INTO characters (name) VALUES (?)", (u_name,))
+            
+    session['user_id'] = user_id
+    session['username'] = u_name
+    session['role'] = role
+    if role == 'teacher':
+        session['teacher'] = True
+    session.permanent = True
+    return jsonify({'ok': True, 'username': u_name, 'role': role})
+
+@app.route('/api/auth/me')
+def api_auth_me():
+    if 'username' in session:
+        return jsonify({
+            'authenticated': True,
+            'username': session['username'],
+            'role': session.get('role', 'student')
+        })
+    return jsonify({'authenticated': False})
+
+@app.route('/api/auth/logout', methods=['POST', 'GET'])
+def api_auth_logout():
+    session.clear()
+    return jsonify({'ok': True})
+
+# ── Live Quiz Room Routes ─────────────────────────────────────
+@app.route('/api/room/create', methods=['POST'])
+def api_room_create():
+    if session.get('role') != 'teacher' and not session.get('teacher'):
+        return jsonify({'ok': False, 'error': 'Chỉ giáo viên mới có quyền tạo phòng thi đấu.'}), 403
+    d = request.get_json(force=True) or {}
+    title = str(d.get('title', 'Đấu Trường Lớp Học')).strip()
+    config = d.get('config', {})
+    questions = d.get('questions', [])
+    created_by = session.get('username', 'teacher')
+    
+    with sqlite3.connect(DB) as c:
+        for _ in range(20):
+            code = f"{random.randint(100000, 999999)}"
+            exists = c.execute("SELECT 1 FROM rooms WHERE code=? AND status != 'finished'", (code,)).fetchone()
+            if not exists:
+                break
+        c.execute('''INSERT INTO rooms (code, title, status, config, current_q, show_result, q_start_time, questions, created_by)
+                     VALUES (?, ?, 'waiting', ?, 0, 0, 0, ?, ?)''',
+                  (code, title, json.dumps(config), json.dumps(questions), created_by))
+    return jsonify({'ok': True, 'code': code, 'title': title, 'questions_count': len(questions)})
+
+@app.route('/api/room/join', methods=['POST'])
+def api_room_join():
+    d = request.get_json(force=True) or {}
+    code = str(d.get('code', '')).strip()
+    name = clean_name(d.get('name', session.get('username', '')))
+    if not code or not name:
+        return jsonify({'ok': False, 'error': 'Vui lòng cung cấp mã phòng và tên người chơi.'}), 400
+        
+    with sqlite3.connect(DB) as c:
+        room = c.execute("SELECT code, title, status, config, questions FROM rooms WHERE code=?", (code,)).fetchone()
+        if not room:
+            return jsonify({'ok': False, 'error': 'Mã phòng không tồn tại hoặc đã đóng.'}), 404
+        if room[2] == 'finished':
+            return jsonify({'ok': False, 'error': 'Phòng thi này đã kết thúc.'}), 400
+            
+        c.execute('''INSERT INTO room_players (room_code, player_name, score, streak, answers, last_ping)
+                     VALUES (?, ?, 0, 0, '{}', CURRENT_TIMESTAMP)
+                     ON CONFLICT(room_code, player_name) DO UPDATE SET last_ping=CURRENT_TIMESTAMP''',
+                  (code, name))
+        config = json.loads(room[3] or '{}')
+        qs = json.loads(room[4] or '[]')
+        
+    return jsonify({
+        'ok': True,
+        'code': code,
+        'title': room[1],
+        'status': room[2],
+        'config': config,
+        'total_questions': len(qs),
+        'player_name': name
+    })
+
+@app.route('/api/room/lobby/<code>')
+def api_room_lobby(code):
+    with sqlite3.connect(DB) as c:
+        room = c.execute("SELECT code, title, status, config, questions, current_q, created_by FROM rooms WHERE code=?", (code,)).fetchone()
+        if not room:
+            return jsonify({'ok': False, 'error': 'Phòng không tồn tại.'}), 404
+        players = c.execute("SELECT player_name, score FROM room_players WHERE room_code=? ORDER BY score DESC, player_name ASC", (code,)).fetchall()
+        qs = json.loads(room[4] or '[]')
+        
+    return jsonify({
+        'ok': True,
+        'code': room[0],
+        'title': room[1],
+        'status': room[2],
+        'current_q': room[5],
+        'total_questions': len(qs),
+        'created_by': room[6],
+        'players': [{'name': p[0], 'score': p[1]} for p in players],
+        'player_count': len(players)
+    })
+
+@app.route('/api/room/start', methods=['POST'])
+def api_room_start():
+    if session.get('role') != 'teacher' and not session.get('teacher'):
+        return jsonify({'ok': False, 'error': 'unauthorized'}), 403
+    d = request.get_json(force=True) or {}
+    code = str(d.get('code', '')).strip()
+    with sqlite3.connect(DB) as c:
+        c.execute("UPDATE rooms SET status='active', current_q=0, show_result=0, q_start_time=? WHERE code=?",
+                  (time.time(), code))
+    return jsonify({'ok': True})
+
+@app.route('/api/room/state/<code>')
+def api_room_state(code):
+    with sqlite3.connect(DB) as c:
+        room = c.execute("SELECT code, title, status, config, current_q, show_result, q_start_time, questions, created_by FROM rooms WHERE code=?", (code,)).fetchone()
+        if not room:
+            return jsonify({'ok': False, 'error': 'Phòng không tồn tại.'}), 404
+            
+        status = room[2]
+        config = json.loads(room[3] or '{}')
+        cur_q_idx = room[4]
+        show_result = room[5]
+        q_start = room[6]
+        questions = json.loads(room[7] or '[]')
+        time_per_q = config.get('time_per_q', 30)
+        
+        now = time.time()
+        elapsed = now - q_start if q_start > 0 else 0
+        time_left = max(0, int(time_per_q - elapsed))
+        
+        # Current question details
+        q_data = None
+        if 0 <= cur_q_idx < len(questions):
+            raw_q = questions[cur_q_idx]
+            q_data = {
+                'index': cur_q_idx,
+                'total': len(questions),
+                'question': raw_q.get('question', ''),
+                'choices': raw_q.get('choices', []),
+            }
+            # Only reveal answer and why if show_result is active or user is teacher
+            is_teacher = session.get('role') == 'teacher' or session.get('teacher')
+            if show_result or is_teacher:
+                q_data['answer'] = raw_q.get('answer', '')
+                q_data['why'] = raw_q.get('why', '')
+                
+        # Leaderboard
+        players = c.execute("SELECT player_name, score, streak FROM room_players WHERE room_code=? ORDER BY score DESC LIMIT 15", (code,)).fetchall()
+        # Count answered for this question
+        answered = 0
+        all_players = c.execute("SELECT answers FROM room_players WHERE room_code=?", (code,)).fetchall()
+        for ap in all_players:
+            ans_map = json.loads(ap[0] or '{}')
+            if str(cur_q_idx) in ans_map:
+                answered += 1
+                
+    return jsonify({
+        'ok': True,
+        'code': code,
+        'title': room[1],
+        'status': status,
+        'current_q': cur_q_idx,
+        'total_questions': len(questions),
+        'show_result': bool(show_result),
+        'time_left': time_left,
+        'time_per_q': time_per_q,
+        'question': q_data,
+        'answered_count': answered,
+        'player_count': len(all_players),
+        'leaderboard': [{'name': p[0], 'score': p[1], 'streak': p[2]} for p in players]
+    })
+
+@app.route('/api/room/submit', methods=['POST'])
+def api_room_submit():
+    d = request.get_json(force=True) or {}
+    code = str(d.get('code', '')).strip()
+    name = clean_name(d.get('name', session.get('username', '')))
+    q_idx = int(d.get('q_idx', 0))
+    chosen = str(d.get('answer', '')).strip()
+    time_spent = float(d.get('time_spent', 0))
+    
+    with sqlite3.connect(DB) as c:
+        room = c.execute("SELECT questions, config, status, show_result FROM rooms WHERE code=?", (code,)).fetchone()
+        if not room or room[2] != 'active':
+            return jsonify({'ok': False, 'error': 'Phòng không trong trạng thái làm bài.'}), 400
+        if room[3]:
+            return jsonify({'ok': False, 'error': 'Thời gian nộp câu hỏi này đã hết.'}), 400
+            
+        questions = json.loads(room[0] or '[]')
+        if q_idx < 0 or q_idx >= len(questions):
+            return jsonify({'ok': False, 'error': 'Câu hỏi không hợp lệ.'}), 400
+            
+        target_q = questions[q_idx]
+        correct_ans = str(target_q.get('answer', '')).strip()
+        is_correct = (chosen == correct_ans)
+        
+        config = json.loads(room[1] or '{}')
+        time_per_q = config.get('time_per_q', 30)
+        
+        p_row = c.execute("SELECT score, streak, answers FROM room_players WHERE room_code=? AND player_name=?", (code, name)).fetchone()
+        if not p_row:
+            return jsonify({'ok': False, 'error': 'Học sinh chưa tham gia phòng.'}), 400
+            
+        cur_score, cur_streak, ans_json = p_row
+        ans_map = json.loads(ans_json or '{}')
+        if str(q_idx) in ans_map:
+            return jsonify({'ok': True, 'already_submitted': True, 'score': cur_score})
+            
+        if is_correct:
+            cur_streak += 1
+            speed_ratio = max(0, (time_per_q - time_spent) / max(1, time_per_q))
+            speed_bonus = int(500 * speed_ratio)
+            streak_bonus = min(200, cur_streak * 20)
+            points = 500 + speed_bonus + streak_bonus
+        else:
+            cur_streak = 0
+            points = 0
+            
+        new_score = cur_score + points
+        ans_map[str(q_idx)] = {'chosen': chosen, 'correct': is_correct, 'points': points}
+        c.execute("UPDATE room_players SET score=?, streak=?, answers=?, last_ping=CURRENT_TIMESTAMP WHERE room_code=? AND player_name=?",
+                  (new_score, cur_streak, json.dumps(ans_map), code, name))
+                  
+    return jsonify({
+        'ok': True,
+        'correct': is_correct,
+        'points': points,
+        'total_score': new_score,
+        'streak': cur_streak,
+        'correct_answer': correct_ans,
+        'why': target_q.get('why', '')
+    })
+
+@app.route('/api/room/show_result', methods=['POST'])
+def api_room_show_result():
+    if session.get('role') != 'teacher' and not session.get('teacher'):
+        return jsonify({'ok': False, 'error': 'unauthorized'}), 403
+    d = request.get_json(force=True) or {}
+    code = str(d.get('code', '')).strip()
+    with sqlite3.connect(DB) as c:
+        c.execute("UPDATE rooms SET show_result=1 WHERE code=?", (code,))
+    return jsonify({'ok': True})
+
+def _award_room_rewards(c, code):
+    try:
+        players = c.execute("SELECT player_name, score FROM room_players WHERE room_code=? ORDER BY score DESC", (code,)).fetchall()
+        for idx, (pname, pscore) in enumerate(players):
+            if idx == 0:
+                bonus_xp, bonus_coins = 500, 50
+            elif idx == 1:
+                bonus_xp, bonus_coins = 350, 35
+            elif idx == 2:
+                bonus_xp, bonus_coins = 250, 25
+            else:
+                bonus_xp, bonus_coins = 150, 15
+                
+            c.execute('''UPDATE characters
+                         SET xp = xp + ?,
+                             week_xp = week_xp + ?,
+                             coins = coins + ?,
+                             rounds_played = rounds_played + 1
+                         WHERE name = ?''',
+                      (bonus_xp, bonus_xp, bonus_coins, pname))
+            row = c.execute("SELECT xp FROM characters WHERE name=?", (pname,)).fetchone()
+            if row:
+                c.execute("UPDATE characters SET level=? WHERE name=?", (calc_level(row[0]), pname))
+    except Exception as e:
+        app.logger.error(f"Error awarding room rewards: {e}")
+
+@app.route('/api/room/next_q', methods=['POST'])
+def api_room_next_q():
+    if session.get('role') != 'teacher' and not session.get('teacher'):
+        return jsonify({'ok': False, 'error': 'unauthorized'}), 403
+    d = request.get_json(force=True) or {}
+    code = str(d.get('code', '')).strip()
+    with sqlite3.connect(DB) as c:
+        room = c.execute("SELECT current_q, questions FROM rooms WHERE code=?", (code,)).fetchone()
+        if not room:
+            return jsonify({'ok': False, 'error': 'Phòng không tồn tại'}), 404
+        cur_q = room[0]
+        questions = json.loads(room[1] or '[]')
+        next_idx = cur_q + 1
+        if next_idx >= len(questions):
+            c.execute("UPDATE rooms SET status='finished', current_q=?, show_result=1 WHERE code=?", (next_idx, code))
+            _award_room_rewards(c, code)
+            return jsonify({'ok': True, 'finished': True})
+        else:
+            c.execute("UPDATE rooms SET current_q=?, show_result=0, q_start_time=? WHERE code=?",
+                      (next_idx, time.time(), code))
+            return jsonify({'ok': True, 'finished': False, 'current_q': next_idx})
+
+@app.route('/api/room/end', methods=['POST'])
+def api_room_end():
+    if session.get('role') != 'teacher' and not session.get('teacher'):
+        return jsonify({'ok': False, 'error': 'unauthorized'}), 403
+    d = request.get_json(force=True) or {}
+    code = str(d.get('code', '')).strip()
+    with sqlite3.connect(DB) as c:
+        c.execute("UPDATE rooms SET status='finished' WHERE code=?", (code,))
+        _award_room_rewards(c, code)
+    return jsonify({'ok': True})
+
+# ── Custom Quizzes ────────────────────────────────────────────
+@app.route('/api/quizzes', methods=['GET'])
+def api_quizzes_list():
+    with sqlite3.connect(DB) as c:
+        quizzes = c.execute('''SELECT q.id, q.title, q.description, q.created_by, q.created_at, COUNT(k.id) as q_count
+                               FROM custom_quizzes q
+                               LEFT JOIN custom_questions k ON q.id = k.quiz_id
+                               GROUP BY q.id ORDER BY q.id DESC''').fetchall()
+    return jsonify([{
+        'id': r[0],
+        'title': r[1],
+        'description': r[2],
+        'created_by': r[3],
+        'created_at': r[4],
+        'question_count': r[5]
+    } for r in quizzes])
+
+@app.route('/api/quizzes/<int:quiz_id>', methods=['GET'])
+def api_quiz_detail(quiz_id):
+    with sqlite3.connect(DB) as c:
+        q_row = c.execute("SELECT id, title, description, created_by FROM custom_quizzes WHERE id=?", (quiz_id,)).fetchone()
+        if not q_row:
+            return jsonify({'ok': False, 'error': 'Không tìm thấy bộ đề'}), 404
+        items = c.execute("SELECT id, question, choices, answer, why, order_idx FROM custom_questions WHERE quiz_id=? ORDER BY order_idx ASC, id ASC", (quiz_id,)).fetchall()
+        
+    return jsonify({
+        'ok': True,
+        'quiz': {
+            'id': q_row[0],
+            'title': q_row[1],
+            'description': q_row[2],
+            'created_by': q_row[3],
+            'questions': [{
+                'id': it[0],
+                'question': it[1],
+                'choices': json.loads(it[2] or '[]'),
+                'answer': it[3],
+                'why': it[4],
+                'order_idx': it[5]
+            } for it in items]
+        }
+    })
+
+@app.route('/api/quizzes/save', methods=['POST'])
+def api_quizzes_save():
+    if session.get('role') != 'teacher' and not session.get('teacher'):
+        return jsonify({'ok': False, 'error': 'Chỉ giáo viên mới có quyền soạn đề thi.'}), 403
+        
+    d = request.get_json(force=True) or {}
+    quiz_id = d.get('id')
+    title = str(d.get('title', '')).strip()
+    desc = str(d.get('description', '')).strip()
+    questions = d.get('questions', [])
+    created_by = session.get('username', 'teacher')
+    
+    if not title:
+        return jsonify({'ok': False, 'error': 'Vui lòng nhập tiêu đề bộ đề.'}), 400
+        
+    with sqlite3.connect(DB) as c:
+        if quiz_id:
+            c.execute("UPDATE custom_quizzes SET title=?, description=? WHERE id=?", (title, desc, quiz_id))
+            c.execute("DELETE FROM custom_questions WHERE quiz_id=?", (quiz_id,))
+        else:
+            c.execute("INSERT INTO custom_quizzes (title, description, created_by) VALUES (?, ?, ?)", (title, desc, created_by))
+            quiz_id = c.execute("SELECT last_insert_rowid()").fetchone()[0]
+            
+        for idx, item in enumerate(questions):
+            q_text = str(item.get('question', '')).strip()
+            choices = item.get('choices', [])
+            answer = str(item.get('answer', '')).strip()
+            why = str(item.get('why', '')).strip()
+            if q_text and choices and answer:
+                c.execute('''INSERT INTO custom_questions (quiz_id, question, choices, answer, why, order_idx)
+                             VALUES (?, ?, ?, ?, ?, ?)''',
+                          (quiz_id, q_text, json.dumps(choices), answer, why, idx))
+                          
+    return jsonify({'ok': True, 'quiz_id': quiz_id})
+
+@app.route('/api/quizzes/<int:quiz_id>', methods=['DELETE'])
+def api_quizzes_delete(quiz_id):
+    if session.get('role') != 'teacher' and not session.get('teacher'):
+        return jsonify({'ok': False, 'error': 'unauthorized'}), 403
+    with sqlite3.connect(DB) as c:
+        c.execute("DELETE FROM custom_questions WHERE quiz_id=?", (quiz_id,))
+        c.execute("DELETE FROM custom_quizzes WHERE id=?", (quiz_id,))
+    return jsonify({'ok': True})
 
 # ── Game routes ───────────────────────────────────────────────
 @app.route('/')

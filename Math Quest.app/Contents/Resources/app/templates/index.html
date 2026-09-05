@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>⚔️ Math Quest</title>
+  <title>Đấu Trường Toán Học - Học Toán 6 Thật Vui</title>
   <link rel="icon" href="/favicon.ico" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&family=Fredoka+One&family=Nunito:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
   <style>
 {% include '_styles.css' %}
   </style>
@@ -14,78 +15,204 @@
 <body>
 <div id="confetti"></div>
 
-<!-- Language toggle pill — fixed, always visible -->
+<!-- Language toggle pill — for game screens -->
 <button id="langPill" onclick="toggleLang()"
-  style="position:fixed;bottom:16px;right:14px;z-index:9999;font-family:'Nunito',sans-serif;
+  style="display:none;position:fixed;bottom:16px;right:14px;z-index:9999;font-family:'Nunito',sans-serif;
          font-weight:800;font-size:.7rem;padding:5px 11px;border-radius:100px;
          background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);
          color:var(--muted);cursor:pointer;transition:background .15s,color .15s;letter-spacing:.06em">
   🌐 EN
 </button>
 
-<!-- Top user & role header bar -->
-<div id="userHeaderBar" style="display:none;width:100%;max-width:480px;margin:12px auto 6px;padding:8px 14px;background:var(--card);border:1px solid rgba(255,255,255,.12);border-radius:14px;align-items:center;justify-content:space-between;box-sizing:border-box">
-  <div style="display:flex;align-items:center;gap:8px">
-    <span id="userHeaderAvatar" style="font-size:1.3rem">🧑</span>
-    <span id="userHeaderName" style="font-weight:800;font-size:.92rem;color:var(--text)">...</span>
-    <span id="userHeaderRole" style="font-size:.68rem;font-weight:800;padding:3px 9px;border-radius:100px;background:rgba(168,85,247,.2);color:#c084fc;border:1px solid rgba(168,85,247,.4)">Học Sinh</span>
-  </div>
-  <div style="display:flex;align-items:center;gap:8px">
-    <button id="userHeaderTeacherBtn" class="btn" style="display:none;padding:5px 11px;font-size:.74rem;background:var(--accent);color:#fff" onclick="location.href='/teacher'">⚙️ Quản Trị</button>
-    <button class="btn" style="padding:5px 11px;font-size:.74rem;background:rgba(255,255,255,.08);color:var(--muted);border:1px solid rgba(255,255,255,.15)" onclick="doLogout()">Đăng xuất</button>
-  </div>
-</div>
-
-<!-- ══ 1: START & UNIFIED AUTH ═════════════════════════════════ -->
+<!-- ══ 1: START SCREEN / EDTECH LANDING PAGE ═══════════════════ -->
 <div class="screen active" id="startScreen">
-  <div class="logo">Đấu Trường Toán 6</div>
-  <p class="tagline">⚔️ Khám phá tri thức & Đấu trường trực tiếp ⚔️</p>
+  <!-- ── 1. NAVBAR ── -->
+  <header class="edtech-navbar">
+    <div class="edtech-nav-container">
+      <a class="edtech-brand" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+        <img src="/static/logo.png" alt="ĐẤU TRƯỜNG TOÁN HỌC" class="edtech-logo-img">
+      </a>
 
-  <!-- Unified Auth Box -->
-  <div class="auth-card" id="unifiedAuthBox" style="width:100%;max-width:380px;background:var(--card);border:1px solid rgba(255,255,255,.12);border-radius:var(--radius-lg);padding:24px;box-shadow:0 8px 32px rgba(0,0,0,.4)">
-    <!-- Tabs: Đăng Nhập / Đăng Ký -->
-    <div style="display:flex;background:var(--card2);border-radius:12px;padding:4px;margin-bottom:18px;gap:4px">
-      <button id="tabAuthLogin" class="btn" style="flex:1;padding:8px;font-size:.85rem;font-weight:800;border-radius:9px;background:var(--amber);color:#1c1917" onclick="switchAuthTab('login')">Đăng Nhập</button>
-      <button id="tabAuthRegister" class="btn" style="flex:1;padding:8px;font-size:.85rem;font-weight:800;border-radius:9px;background:transparent;color:var(--muted)" onclick="switchAuthTab('register')">Đăng Ký</button>
+      <!-- Desktop Navigation Menu -->
+      <ul class="edtech-menu" id="edtechMenu">
+        <li><a class="edtech-menu-link active" onclick="window.scrollTo({top:0,behavior:'smooth'})">Trang chủ</a></li>
+        <li><a class="edtech-menu-link" onclick="handleNavPractice()">Luyện tập</a></li>
+        <li><a class="edtech-menu-link" onclick="openRoomJoinModal()">Đấu trường</a></li>
+        <li><a class="edtech-menu-link" onclick="handleNavLeaderboard()">Bảng xếp hạng</a></li>
+      </ul>
+
+      <!-- Action buttons -->
+      <div class="edtech-nav-actions">
+        <button class="edtech-lang-btn" onclick="toggleLang()" title="Chuyển đổi ngôn ngữ">
+          <span id="navLangText">🇻🇳 VI | EN</span>
+        </button>
+
+        <!-- Unauthenticated state (default) -->
+        <div id="navGuestActions" style="display:flex;align-items:center;gap:10px">
+          <button class="edtech-btn-login" onclick="openAuthModal('login')">Đăng nhập</button>
+          <button class="edtech-btn-register" onclick="openAuthModal('register')">Đăng ký</button>
+        </div>
+
+        <!-- Authenticated state -->
+        <div id="navUserActions" style="display:none;align-items:center;gap:10px">
+          <div class="edtech-user-pill">
+            <span id="navUserAvatar" style="font-size:1.15rem">🧑</span>
+            <span id="navUserName" class="edtech-user-name">...</span>
+            <span id="navUserRole" class="edtech-user-role">Học Sinh</span>
+          </div>
+          <button id="navTeacherBtn" class="edtech-btn-register" style="display:none;padding:8px 16px;font-size:.85rem;background:#10B981" onclick="location.href='/teacher'">⚙️ Quản Trị</button>
+          <button id="navStudentBtn" class="edtech-btn-register" style="padding:8px 16px;font-size:.85rem" onclick="handleHeroCta()">🎒 Vào Học</button>
+          <button class="edtech-btn-login" style="padding:6px 12px;font-size:.85rem" onclick="doLogout()">Đăng xuất</button>
+        </div>
+
+        <!-- Mobile Hamburger Toggle -->
+        <button class="edtech-hamburger" id="navHamburger" onclick="toggleMobileMenu()" aria-label="Menu">☰</button>
+      </div>
     </div>
+  </header>
 
-    <!-- Error notice -->
-    <div id="authErrMsg" style="display:none;background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.4);color:#f87171;padding:8px 12px;border-radius:9px;font-size:.78rem;font-weight:700;margin-bottom:14px;text-align:center"></div>
-
-    <!-- Form Đăng Nhập -->
-    <div id="formLogin">
-      <label style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">Tên Đăng Nhập</label>
-      <input type="text" id="loginUsername" class="auth-field" placeholder="Nhập tên đăng nhập…" autocomplete="username" style="width:100%;padding:11px 14px;border-radius:10px;background:var(--card2);border:1px solid rgba(255,255,255,.15);color:var(--text);font-family:'Nunito',sans-serif;font-size:.95rem;font-weight:700;margin-bottom:14px;box-sizing:border-box">
-      
-      <label style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">Mật Khẩu</label>
-      <input type="password" id="loginPassword" class="auth-field" placeholder="Nhập mật khẩu…" autocomplete="current-password" style="width:100%;padding:11px 14px;border-radius:10px;background:var(--card2);border:1px solid rgba(255,255,255,.15);color:var(--text);font-family:'Nunito',sans-serif;font-size:.95rem;font-weight:700;margin-bottom:18px;box-sizing:border-box">
-
-      <button class="btn btn-amber" style="width:100%;padding:12px" onclick="doLogin()">Vào Đấu Trường →</button>
-    </div>
-
-    <!-- Form Đăng Ký -->
-    <div id="formRegister" style="display:none">
-      <label style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">Tên Đăng Nhập Mới</label>
-      <input type="text" id="regUsername" class="auth-field" placeholder="Chọn tên (ví dụ: namtoan6)…" autocomplete="off" style="width:100%;padding:11px 14px;border-radius:10px;background:var(--card2);border:1px solid rgba(255,255,255,.15);color:var(--text);font-family:'Nunito',sans-serif;font-size:.95rem;font-weight:700;margin-bottom:12px;box-sizing:border-box">
-
-      <label style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">Mật Khẩu</label>
-      <input type="password" id="regPassword" class="auth-field" placeholder="Tối thiểu 4 ký tự…" autocomplete="new-password" style="width:100%;padding:11px 14px;border-radius:10px;background:var(--card2);border:1px solid rgba(255,255,255,.15);color:var(--text);font-family:'Nunito',sans-serif;font-size:.95rem;font-weight:700;margin-bottom:12px;box-sizing:border-box">
-
-      <label style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">Bạn Là (Chọn Vai Trò):</label>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
-        <label id="roleLblStudent" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 8px;border-radius:10px;border:2px solid var(--accent);background:rgba(168,85,247,.15);cursor:pointer;font-weight:800;font-size:.82rem;text-align:center">
-          <input type="radio" name="userRole" value="student" checked onchange="updateRoleUI()" style="display:none">
-          <span style="font-size:1.4rem;margin-bottom:4px">🎓</span>
-          <span>Học Sinh</span>
-        </label>
-        <label id="roleLblTeacher" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 8px;border-radius:10px;border:2px solid rgba(255,255,255,.12);background:transparent;cursor:pointer;font-weight:800;font-size:.82rem;text-align:center">
-          <input type="radio" name="userRole" value="teacher" onchange="updateRoleUI()" style="display:none">
-          <span style="font-size:1.4rem;margin-bottom:4px">👨‍🏫</span>
-          <span>Giáo Viên</span>
-        </label>
+  <!-- ── 2. HERO SECTION ── -->
+  <section class="edtech-hero-section" id="hero">
+    <div class="edtech-hero-grid">
+      <!-- Cột trái: Giới thiệu & CTA -->
+      <div>
+        <div class="edtech-hero-badge">
+          <span>🎓</span> Học toán thật vui – Cùng nhau tiến bộ
+        </div>
+        <h1 class="edtech-hero-title">
+          Đấu trường<br><span>Toán học</span>
+        </h1>
+        <p class="edtech-hero-desc">
+          Nền tảng học và rèn luyện môn Toán bám sát chương trình Toán 6 GDPT 2018 (Kết nối tri thức, Cánh diều, Chân trời sáng tạo). Thi đấu trực tiếp, rèn luyện tư duy và chinh phục đỉnh cao tri thức!
+        </p>
+        <div class="edtech-hero-cta-group">
+          <button class="edtech-btn-cta-primary" onclick="handleHeroCta()">
+            <span>🚀</span> Bắt đầu ngay →
+          </button>
+          <button class="edtech-btn-cta-secondary" onclick="scrollToFeatures()">
+            <span>🧭</span> Tìm hiểu thêm
+          </button>
+        </div>
       </div>
 
-      <button class="btn btn-purple" style="width:100%;padding:12px" onclick="doRegister()">Tạo Tài Khoản & Bắt Đầu →</button>
+      <!-- Cột phải: Hình minh họa chuẩn từ ảnh mẫu -->
+      <div class="edtech-hero-art">
+        <img src="/static/hero_art.png" alt="Học sinh Đấu trường Toán học" class="edtech-hero-img">
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 3. WAVE DIVIDER ── -->
+  <div class="edtech-wave-divider">
+    <svg viewBox="0 0 1440 80" fill="none" preserveAspectRatio="none">
+      <path d="M0,35 C320,80 480,0 800,45 C1120,85 1280,15 1440,35 L1440,80 L0,80 Z" fill="#EAF4FF"></path>
+    </svg>
+  </div>
+
+  <!-- ── 4. FEATURES SECTION ── -->
+  <section class="edtech-features-section" id="features">
+    <div class="edtech-features-container">
+      <div class="edtech-features-header">
+        <span class="edtech-features-badge">✨ TÍNH NĂNG NỔI BẬT</span>
+        <h2 class="edtech-features-title">Trải Nghiệm Học Toán Đột Phá</h2>
+        <p class="edtech-features-sub">Hệ thống học tập thông minh, cá nhân hóa giúp học sinh lớp 6 nắm vững lý thuyết, thành thạo kỹ năng và say mê môn Toán mỗi ngày.</p>
+      </div>
+
+      <div class="edtech-features-grid">
+        <!-- Feature 1 -->
+        <div class="edtech-feature-card" onclick="handleNavPractice()">
+          <div class="edtech-card-icon icon-bg-blue">📚</div>
+          <h3 class="edtech-card-title">Luyện tập đa dạng</h3>
+          <p class="edtech-card-desc">Hơn 35 chuyên đề bám sát chuẩn 3 bộ SGK Toán 6 với ngân hàng câu hỏi tự sinh vô tận và giải thích chi tiết từng bước.</p>
+          <span class="edtech-card-tag">35 chuyên đề SGK →</span>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="edtech-feature-card" onclick="openRoomJoinModal()">
+          <div class="edtech-card-icon icon-bg-yellow">⚔️</div>
+          <h3 class="edtech-card-title">Đấu trường hấp dẫn</h3>
+          <p class="edtech-card-desc">Thi đấu trực tiếp cùng bạn bè qua mã phòng PIN 6 số. Bảng xếp hạng cập nhật theo thời gian thực tăng hào hứng học tập.</p>
+          <span class="edtech-card-tag">Đấu Live Quiz trực tiếp →</span>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="edtech-feature-card" onclick="handleNavLeaderboard()">
+          <div class="edtech-card-icon icon-bg-green">📈</div>
+          <h3 class="edtech-card-title">Theo dõi tiến bộ</h3>
+          <p class="edtech-card-desc">Tích lũy điểm kinh nghiệm (XP), nhận huy hiệu và thăng hạng danh hiệu từ Tập sự đến Đại kiện tướng Toán học.</p>
+          <span class="edtech-card-tag">Hệ thống cấp độ & XP →</span>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="edtech-feature-card" onclick="openAuthModal('register')">
+          <div class="edtech-card-icon icon-bg-purple">🤝</div>
+          <h3 class="edtech-card-title">Cộng đồng thân thiện</h3>
+          <p class="edtech-card-desc">Không gian kết nối giữa Thầy cô và Học sinh. Giáo viên tạo đề, quản lý lớp và theo dõi kết quả của từng học sinh.</p>
+          <span class="edtech-card-tag">Kết nối Thầy & Trò →</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 5. MODAL POPUP AUTH (ĐĂNG NHẬP / ĐĂNG KÝ) ── -->
+  <!-- TUYỆT ĐỐI ẨN MẶC ĐỊNH. CHỈ HIỆN KHI BẤM ĐĂNG NHẬP / ĐĂNG KÝ HOẶC NÚT CTA -->
+  <div id="authModal" class="edtech-modal-backdrop" onclick="handleAuthModalBackdrop(event)">
+    <div class="edtech-modal-card">
+      <button class="edtech-modal-close" onclick="closeAuthModal()" aria-label="Đóng">✕</button>
+
+      <div class="edtech-modal-brand">
+        <img src="/static/logo.png" alt="Logo" style="height:38px;margin:0 auto 10px;display:block">
+        <h3 id="authModalTitle" style="font-size:1.35rem;font-weight:900;color:var(--ed-navy);margin-bottom:4px">Đấu Trường Toán Học</h3>
+        <p id="authModalSub" style="font-size:.88rem;color:var(--ed-gray)">Vui lòng đăng nhập để bắt đầu học tập & thi đấu</p>
+      </div>
+
+      <!-- Segmented Tabs -->
+      <div class="edtech-modal-tabs">
+        <button id="tabAuthLogin" class="edtech-modal-tab active" onclick="switchAuthTab('login')">Đăng Nhập</button>
+        <button id="tabAuthRegister" class="edtech-modal-tab" onclick="switchAuthTab('register')">Đăng Ký</button>
+      </div>
+
+      <!-- Error Alert -->
+      <div id="authErrMsg" class="edtech-modal-err"></div>
+
+      <!-- Form Đăng Nhập -->
+      <div id="formLogin">
+        <div class="edtech-form-group">
+          <label class="edtech-form-label">Tên Đăng Nhập</label>
+          <input type="text" id="loginUsername" class="edtech-input" placeholder="Nhập tên tài khoản…" autocomplete="username">
+        </div>
+        <div class="edtech-form-group" style="margin-bottom:22px">
+          <label class="edtech-form-label">Mật Khẩu</label>
+          <input type="password" id="loginPassword" class="edtech-input" placeholder="Nhập mật khẩu…" autocomplete="current-password">
+        </div>
+        <button class="edtech-btn-submit" onclick="doLogin()">Vào Đấu Trường →</button>
+      </div>
+
+      <!-- Form Đăng Ký -->
+      <div id="formRegister" style="display:none">
+        <div class="edtech-form-group">
+          <label class="edtech-form-label">Tên Đăng Nhập Mới</label>
+          <input type="text" id="regUsername" class="edtech-input" placeholder="Ví dụ: namtoan6…" autocomplete="username">
+        </div>
+        <div class="edtech-form-group">
+          <label class="edtech-form-label">Mật Khẩu</label>
+          <input type="password" id="regPassword" class="edtech-input" placeholder="Tối thiểu 4 ký tự…" autocomplete="new-password">
+        </div>
+        <div class="edtech-form-group" style="margin-bottom:20px">
+          <label class="edtech-form-label">Bạn Là (Chọn Vai Trò):</label>
+          <div class="edtech-role-grid">
+            <div id="roleCardStudent" class="edtech-role-card selected" onclick="selectRole('student')">
+              <span style="font-size:1.6rem;margin-bottom:4px">🎓</span>
+              <span>Học Sinh</span>
+            </div>
+            <div id="roleCardTeacher" class="edtech-role-card" onclick="selectRole('teacher')">
+              <span style="font-size:1.6rem;margin-bottom:4px">👨‍🏫</span>
+              <span>Giáo Viên</span>
+            </div>
+          </div>
+        </div>
+        <button class="edtech-btn-submit" onclick="doRegister()">Tạo Tài Khoản & Bắt Đầu →</button>
+      </div>
     </div>
   </div>
 </div>
@@ -428,6 +555,8 @@ function applyTranslations() {
   });
   const pill = document.getElementById('langPill');
   if(pill) pill.textContent = lang === 'vi' ? '🌐 EN' : '🌐 VI';
+  const navLang = document.getElementById('navLangText');
+  if(navLang) navLang.textContent = lang === 'vi' ? '🇻🇳 VI | EN' : '🇬🇧 EN | VI';
 }
 
 function toggleLang(){
@@ -701,12 +830,15 @@ function updateBottomNav(screenId){
   };
   const isGame  = screenId === 'gameScreen';
   const isStart = screenId === 'startScreen';
-  const showNav = !isGame && !(isStart && !localStorage.getItem('mq_name'));
+  const showNav = !isGame && !isStart && currentUser;
   const nav = document.getElementById('bottomNav');
-  nav.style.display = showNav ? 'flex' : 'none';
+  if(nav) nav.style.display = showNav ? 'flex' : 'none';
   document.body.classList.toggle('show-nav', showNav);
   const pill = document.getElementById('langPill');
-  if(pill) pill.style.bottom = showNav ? '72px' : '16px';
+  if(pill){
+    pill.style.display = isStart ? 'none' : 'block';
+    pill.style.bottom  = showNav ? '72px' : '16px';
+  }
   document.querySelectorAll('.bnav-tab').forEach(t=>t.classList.remove('bnav-active'));
   const key = TAB_MAP[screenId];
   if(key) document.getElementById('bnav-'+key)?.classList.add('bnav-active');
@@ -728,58 +860,10 @@ async function goToTopics(){
 }
 
 // ═══════════════════════════════════════════
-// AUTH / LOGIN
+// AUTH & LANDING PAGE SYSTEM
 // ═══════════════════════════════════════════
-let allPlayers=[], authName='', authIsNew=false;
-
-async function fetchPlayers(){
-  try{
-    const r=await fetch('/api/players');
-    allPlayers=await r.json();
-    renderPlayerPicker();
-  }catch{ allPlayers=[]; }
-}
-
-const AV_MAP={knight:'🤺',archer:'🏹',mage:'🧙',wizard:'🧙‍♀️',bard:'🎭',dragon:'🐉',legend:'🌟'};
-
-function renderPickerList(players){
-  const el=document.getElementById('playerPicker');
-  if(!el) return;
-  if(players.length===0){
-    el.innerHTML='<div class="picker-empty">No match — type your name below to create it</div>';
-    return;
-  }
-  el.innerHTML='';
-  players.forEach(p=>{
-    const av=p.cosmetics?.avatar;
-    const emoji=(av&&av!=='auto'&&AV_MAP[av])||'🧑';
-    const btn=document.createElement('button');
-    btn.className='picker-chip';
-    const se=document.createElement('span'); se.className='picker-chip-emoji'; se.textContent=emoji;
-    const sn=document.createElement('span'); sn.className='picker-chip-name';  sn.textContent=p.name;
-    const sl=document.createElement('span'); sl.className='picker-chip-lv';    sl.textContent=`Lv ${p.level}`;
-    btn.append(se,sn,sl);
-    btn.addEventListener('click',()=>pickName(p.name));
-    el.appendChild(btn);
-  });
-}
-
-function filterPicker(query){
-  const q=query.toLowerCase().trim();
-  const filtered=q?allPlayers.filter(p=>p.name.toLowerCase().includes(q)):allPlayers;
-  renderPickerList(filtered);
-}
-
-function renderPlayerPicker(){
-  const wrap=document.getElementById('pickerWrap');
-  const orLbl=document.getElementById('authOrLabel');
-  if(!wrap||allPlayers.length===0) return;
-  wrap.style.display='';
-  if(orLbl) orLbl.style.display='';
-  renderPickerList(allPlayers);
-}
-
 let currentUser = null;
+let selectedRole = 'student';
 
 async function checkAuth(){
   try {
@@ -787,76 +871,164 @@ async function checkAuth(){
     const d = await r.json();
     if(d.authenticated){
       currentUser = { username: d.username, role: d.role };
-      updateUserHeader();
-      if(d.role === 'teacher'){
-        document.getElementById('startScreen').classList.remove('active');
-        document.getElementById('topicScreen').classList.remove('active');
-        // If teacher, can jump to teacher dashboard
-        location.href = '/teacher';
-      } else {
+      updateNavbarUser();
+      if(d.role === 'student'){
         localStorage.setItem('mq_name', d.username);
-        const charData = await loadCharacter(d.username);
-        character = {...charData, name: d.username};
-        applyCosmetics(character.cosmetics);
-        renderCharacterScreen(false);
-        showScreen('characterScreen');
+        loadCharacter(d.username).then(data => {
+          if(data){
+            character = {...data, name: d.username};
+            applyCosmetics(character.cosmetics);
+          }
+        }).catch(err => console.log('Load character notice:', err));
       }
     } else {
       currentUser = null;
-      document.getElementById('userHeaderBar').style.display = 'none';
-      showScreen('startScreen');
+      updateNavbarUser();
     }
   } catch(e) {
-    console.error(e);
-    showScreen('startScreen');
+    console.error('checkAuth error', e);
+    currentUser = null;
+    updateNavbarUser();
   }
 }
 
-function updateUserHeader(){
-  const bar = document.getElementById('userHeaderBar');
-  if(!currentUser){ bar.style.display = 'none'; return; }
-  bar.style.display = 'flex';
-  document.getElementById('userHeaderName').textContent = currentUser.username;
-  const isTeacher = currentUser.role === 'teacher';
-  const roleEl = document.getElementById('userHeaderRole');
-  roleEl.textContent = isTeacher ? '👨‍🏫 Giáo Viên' : '🎓 Học Sinh';
-  roleEl.style.background = isTeacher ? 'rgba(74,222,128,.15)' : 'rgba(168,85,247,.2)';
-  roleEl.style.color = isTeacher ? '#4ade80' : '#c084fc';
-  roleEl.style.borderColor = isTeacher ? 'rgba(74,222,128,.4)' : 'rgba(168,85,247,.4)';
-  document.getElementById('userHeaderTeacherBtn').style.display = isTeacher ? 'inline-block' : 'none';
+function updateNavbarUser(){
+  const guestBox = document.getElementById('navGuestActions');
+  const userBox  = document.getElementById('navUserActions');
+  if(!guestBox || !userBox) return;
+
+  if(currentUser){
+    guestBox.style.display = 'none';
+    userBox.style.display  = 'flex';
+    document.getElementById('navUserName').textContent = currentUser.username;
+    const isTeacher = currentUser.role === 'teacher';
+    const roleEl = document.getElementById('navUserRole');
+    roleEl.textContent = isTeacher ? '👨‍🏫 Giáo Viên' : '🎓 Học Sinh';
+    roleEl.style.background = isTeacher ? '#ECFDF5' : '#EAF4FF';
+    roleEl.style.color = isTeacher ? '#059669' : '#1769E0';
+    document.getElementById('navTeacherBtn').style.display = isTeacher ? 'inline-block' : 'none';
+    document.getElementById('navStudentBtn').style.display = isTeacher ? 'none' : 'inline-block';
+  } else {
+    guestBox.style.display = 'flex';
+    userBox.style.display  = 'none';
+  }
+}
+
+// ── Landing Page Nav Handlers ──
+function startQuest(){
+  if(currentUser && currentUser.role === 'teacher'){
+    location.href = '/teacher';
+    return;
+  }
+  goToTopics();
+}
+
+function handleHeroCta(){
+  if(!currentUser){
+    openAuthModal('login');
+    return;
+  }
+  startQuest();
+}
+
+function handleNavPractice(){
+  if(!currentUser){
+    openAuthModal('login');
+    return;
+  }
+  goToTopics();
+}
+
+function handleNavLeaderboard(){
+  if(!currentUser){
+    openAuthModal('login');
+    return;
+  }
+  showGuild();
+}
+
+function scrollToFeatures(){
+  const el = document.getElementById('features');
+  if(el) el.scrollIntoView({ behavior: 'smooth' });
+}
+
+function toggleMobileMenu(){
+  const menu = document.getElementById('edtechMenu');
+  if(menu) menu.classList.toggle('mobile-open');
+}
+
+// ── Auth Modal Popup Controls ──
+function openAuthModal(tab = 'login'){
+  const modal = document.getElementById('authModal');
+  if(!modal) return;
+  modal.style.display = 'flex';
+  switchAuthTab(tab);
+  document.getElementById('authErrMsg').style.display = 'none';
+  if(tab === 'login'){
+    setTimeout(() => document.getElementById('loginUsername')?.focus(), 100);
+  } else {
+    setTimeout(() => document.getElementById('regUsername')?.focus(), 100);
+  }
+}
+
+function closeAuthModal(){
+  const modal = document.getElementById('authModal');
+  if(modal) modal.style.display = 'none';
+  const errEl = document.getElementById('authErrMsg');
+  if(errEl) errEl.style.display = 'none';
+}
+
+function handleAuthModalBackdrop(e){
+  if(e.target.id === 'authModal'){
+    closeAuthModal();
+  }
 }
 
 function switchAuthTab(tab){
   const isLogin = tab === 'login';
-  document.getElementById('tabAuthLogin').style.background = isLogin ? 'var(--amber)' : 'transparent';
-  document.getElementById('tabAuthLogin').style.color = isLogin ? '#1c1917' : 'var(--muted)';
-  document.getElementById('tabAuthRegister').style.background = !isLogin ? 'var(--accent)' : 'transparent';
-  document.getElementById('tabAuthRegister').style.color = !isLogin ? '#fff' : 'var(--muted)';
-  document.getElementById('formLogin').style.display = isLogin ? 'block' : 'none';
-  document.getElementById('formRegister').style.display = !isLogin ? 'block' : 'none';
-  document.getElementById('authErrMsg').style.display = 'none';
+  const tabLogin = document.getElementById('tabAuthLogin');
+  const tabReg   = document.getElementById('tabAuthRegister');
+  const formLogin = document.getElementById('formLogin');
+  const formReg   = document.getElementById('formRegister');
+  const title = document.getElementById('authModalTitle');
+  const sub   = document.getElementById('authModalSub');
+
+  if(tabLogin) tabLogin.className = `edtech-modal-tab ${isLogin ? 'active' : ''}`;
+  if(tabReg)   tabReg.className   = `edtech-modal-tab ${!isLogin ? 'active' : ''}`;
+  if(formLogin) formLogin.style.display = isLogin ? 'block' : 'none';
+  if(formReg)   formReg.style.display   = !isLogin ? 'block' : 'none';
+
+  if(title) title.textContent = isLogin ? 'Đăng Nhập Đấu Trường' : 'Tạo Tài Khoản Mới';
+  if(sub)   sub.textContent   = isLogin ? 'Vui lòng đăng nhập để bắt đầu học tập & thi đấu' : 'Tham gia cộng đồng Đấu Trường Toán Học 6';
+
+  const errEl = document.getElementById('authErrMsg');
+  if(errEl) errEl.style.display = 'none';
 }
 
-let selectedRole = 'student';
-function updateRoleUI(){
-  const roles = document.getElementsByName('userRole');
-  for(const r of roles) if(r.checked) selectedRole = r.value;
-  const isStu = selectedRole === 'student';
-  document.getElementById('roleLblStudent').style.borderColor = isStu ? 'var(--accent)' : 'rgba(255,255,255,.12)';
-  document.getElementById('roleLblStudent').style.background = isStu ? 'rgba(168,85,247,.15)' : 'transparent';
-  document.getElementById('roleLblTeacher').style.borderColor = !isStu ? 'var(--accent)' : 'rgba(255,255,255,.12)';
-  document.getElementById('roleLblTeacher').style.background = !isStu ? 'rgba(168,85,247,.15)' : 'transparent';
+function selectRole(role){
+  selectedRole = role;
+  const stuCard = document.getElementById('roleCardStudent');
+  const teaCard = document.getElementById('roleCardTeacher');
+  if(role === 'student'){
+    stuCard?.classList.add('selected');
+    teaCard?.classList.remove('selected');
+  } else {
+    teaCard?.classList.add('selected');
+    stuCard?.classList.remove('selected');
+  }
 }
 
 async function doLogin(){
   const u = document.getElementById('loginUsername').value.trim();
   const p = document.getElementById('loginPassword').value.trim();
   const errEl = document.getElementById('authErrMsg');
+
   if(!u || !p){
     errEl.textContent = 'Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.';
     errEl.style.display = 'block';
     return;
   }
+
   try {
     const res = await fetch('/api/auth/login', {
       method: 'POST',
@@ -865,14 +1037,28 @@ async function doLogin(){
     });
     const d = await res.json();
     if(!d.ok){
-      errEl.textContent = d.error || 'Đăng nhập thất bại';
+      errEl.textContent = d.error || 'Đăng nhập không thành công.';
       errEl.style.display = 'block';
       return;
     }
+
     currentUser = { username: d.username, role: d.role };
-    checkAuth();
+    closeAuthModal();
+    updateNavbarUser();
+
+    if(d.role === 'teacher'){
+      location.href = '/teacher';
+    } else {
+      localStorage.setItem('mq_name', d.username);
+      const charData = await loadCharacter(d.username);
+      character = {...charData, name: d.username};
+      applyCosmetics(character.cosmetics);
+      renderCharacterScreen(false);
+      goToTopics();
+    }
   } catch(e) {
-    errEl.textContent = 'Lỗi kết nối máy chủ.';
+    console.error(e);
+    errEl.textContent = 'Lỗi kết nối máy chủ. Vui lòng thử lại.';
     errEl.style.display = 'block';
   }
 }
@@ -881,11 +1067,18 @@ async function doRegister(){
   const u = document.getElementById('regUsername').value.trim();
   const p = document.getElementById('regPassword').value.trim();
   const errEl = document.getElementById('authErrMsg');
+
   if(!u || !p){
-    errEl.textContent = 'Vui lòng nhập đầy đủ thông tin đăng ký.';
+    errEl.textContent = 'Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.';
     errEl.style.display = 'block';
     return;
   }
+  if(p.length < 4){
+    errEl.textContent = 'Mật khẩu cần tối thiểu 4 ký tự.';
+    errEl.style.display = 'block';
+    return;
+  }
+
   try {
     const res = await fetch('/api/auth/register', {
       method: 'POST',
@@ -894,20 +1087,36 @@ async function doRegister(){
     });
     const d = await res.json();
     if(!d.ok){
-      errEl.textContent = d.error || 'Đăng ký thất bại';
+      errEl.textContent = d.error || 'Đăng ký không thành công.';
       errEl.style.display = 'block';
       return;
     }
+
     currentUser = { username: d.username, role: d.role };
-    checkAuth();
+    closeAuthModal();
+    updateNavbarUser();
+
+    if(d.role === 'teacher'){
+      location.href = '/teacher';
+    } else {
+      localStorage.setItem('mq_name', d.username);
+      const charData = await loadCharacter(d.username);
+      character = {...charData, name: d.username};
+      applyCosmetics(character.cosmetics);
+      renderCharacterScreen(true);
+      goToTopics();
+    }
   } catch(e) {
-    errEl.textContent = 'Lỗi kết nối máy chủ.';
+    console.error(e);
+    errEl.textContent = 'Lỗi kết nối máy chủ. Vui lòng thử lại.';
     errEl.style.display = 'block';
   }
 }
 
 async function doLogout(){
-  await fetch('/api/auth/logout', {method: 'POST'});
+  try {
+    await fetch('/api/auth/logout', {method: 'POST'});
+  } catch(e) {}
   currentUser = null;
   localStorage.removeItem('mq_name');
   location.reload();
@@ -2354,16 +2563,25 @@ async function equipItem(type, id){
   } catch(e){ console.error('equip error',e); }
 }
 
-// ─── Unified Authentication On Load ─────────────────────────
+// ─── Initial Page Load & Event Listeners ─────────────────────
 checkAuth();
 
-document.getElementById('loginUsername')?.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
-document.getElementById('loginPassword')?.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
-document.getElementById('regUsername')?.addEventListener('keydown', e => { if(e.key==='Enter') doRegister(); });
-document.getElementById('regPassword')?.addEventListener('keydown', e => { if(e.key==='Enter') doRegister(); });
-document.getElementById('roomCodeInput')?.addEventListener('keydown', e => { if(e.key==='Enter') submitRoomJoin(); });
+// Keyboard shortcuts for forms
+document.getElementById('loginUsername')?.addEventListener('keydown', e => { if(e.key === 'Enter') doLogin(); });
+document.getElementById('loginPassword')?.addEventListener('keydown', e => { if(e.key === 'Enter') doLogin(); });
+document.getElementById('regUsername')?.addEventListener('keydown', e => { if(e.key === 'Enter') doRegister(); });
+document.getElementById('regPassword')?.addEventListener('keydown', e => { if(e.key === 'Enter') doRegister(); });
+document.getElementById('roomCodeInput')?.addEventListener('keydown', e => { if(e.key === 'Enter') submitRoomJoin(); });
 
-// Apply translations on load (handles saved language preference)
+// Close modals on Escape key
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeAuthModal();
+    closeRoomJoinModal();
+  }
+});
+
+// Apply translations on load
 applyTranslations();
 </script>
 </body>
